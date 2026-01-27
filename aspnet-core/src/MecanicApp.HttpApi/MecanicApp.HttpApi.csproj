@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="..\..\common.props" />
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<RootNamespace>MecanicApp</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\MecanicApp.Domain\MecanicApp.Domain.csproj" />
+		<ProjectReference Include="..\MecanicApp.Application.Contracts\MecanicApp.Application.Contracts.csproj" />
+		<ProjectReference Include="..\MecanicApp.EntityFrameworkCore\MecanicApp.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Volo.Abp.Account.HttpApi" Version="10.0.2" />
+		<PackageReference Include="Volo.Abp.Identity.HttpApi" Version="10.0.2" />
+		<PackageReference Include="Volo.Abp.PermissionManagement.HttpApi" Version="10.0.2" />
+		<PackageReference Include="Volo.Abp.TenantManagement.HttpApi" Version="10.0.2" />
+		<PackageReference Include="Volo.Abp.FeatureManagement.HttpApi" Version="10.0.2" />
+		<PackageReference Include="Volo.Abp.SettingManagement.HttpApi" Version="10.0.2" />
+
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+</Project>

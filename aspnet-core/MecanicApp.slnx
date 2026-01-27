@@ -1,0 +1,35 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MecanicApp.Application.Contracts/MecanicApp.Application.Contracts.csproj" />
+    <Project Path="src/MecanicApp.Application/MecanicApp.Application.csproj" />
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <Project Path="src/MecanicApp.DbMigrator/MecanicApp.DbMigrator.csproj" />
+    <Project Path="src/MecanicApp.Domain.Shared/MecanicApp.Domain.Shared.csproj" />
+    <Project Path="src/MecanicApp.Domain/MecanicApp.Domain.csproj" />
+    <Project Path="src/MecanicApp.EntityFrameworkCore/MecanicApp.EntityFrameworkCore.csproj" />
+    <Project Path="src/MecanicApp.HttpApi.Client/MecanicApp.HttpApi.Client.csproj" />
+    
+    <Project Path="src/MecanicApp.HttpApi.Host/MecanicApp.HttpApi.Host.csproj" />
+    <Project Path="src/MecanicApp.HttpApi/MecanicApp.HttpApi.csproj" />
+    
+    
+    
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/MecanicApp.Application.Tests/MecanicApp.Application.Tests.csproj" />
+    <Project Path="test/MecanicApp.Domain.Tests/MecanicApp.Domain.Tests.csproj" />
+    <Project Path="test/MecanicApp.EntityFrameworkCore.Tests/MecanicApp.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="test/MecanicApp.HttpApi.Client.ConsoleTestApp/MecanicApp.HttpApi.Client.ConsoleTestApp.csproj" />
+    
+    <Project Path="test/MecanicApp.TestBase/MecanicApp.TestBase.csproj" />
+    
+  </Folder>
+</Solution>

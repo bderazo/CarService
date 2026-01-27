@@ -1,0 +1,142 @@
+<header class="sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" routerLink="/dashboard">
+                <div class="bg-primary rounded-circle p-2 me-2">
+                    <i class="fas fa-car fa-lg text-white"></i>
+                </div>
+                <div>
+                    <div class="fw-bold">Taller Mecánico</div>
+                    <small class="text-white-50">Sistema de Gestión</small>
+                </div>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Órdenes como enlace simple -->
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/ordenes" routerLinkActive="active">
+                            <i class="fas fa-clipboard-list me-1"></i> Órdenes
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/clientes" routerLinkActive="active">
+                            <i class="fas fa-users me-1"></i> Clientes
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/vehiculos" routerLinkActive="active">
+                            <i class="fas fa-car me-1"></i> Vehículos
+                        </a>
+                    </li>
+
+                    <!-- Servicios y Productos como enlaces separados -->
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/servicios" routerLinkActive="active">
+                            <i class="fas fa-tools me-1"></i> Servicios
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" routerLink="/productos" routerLinkActive="active">
+                            <i class="fas fa-box me-1"></i> Productos
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Información del sistema simplificada -->
+                <div class="navbar-text">
+                    <span class="badge bg-success">
+                        <i class="fas fa-server me-1"></i> Backend Online
+                    </span>
+                </div>
+
+                <div class="navbar-text" *ngIf="currentUser; else loginButton">
+                    <div class="d-flex align-items-center">
+                        <div class="me-3">
+                            <small class="text-white-50 d-block">Conectado como</small>
+                            <span class="badge bg-info">
+                                <i class="fas fa-user me-1"></i> {{ currentUser.username }}
+                            </span>
+                        </div>
+                        <div class="vr text-white-50 me-3"></div>
+                        <button class="btn btn-sm btn-outline-light" (click)="logout()">
+                            <i class="fas fa-sign-out-alt me-1"></i> Salir
+                        </button>
+                    </div>
+                </div>
+
+                <ng-template #loginButton>
+                    <div class="navbar-text">
+                        <a routerLink="/login" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+                        </a>
+                    </div>
+                </ng-template>
+            </div>
+        </div>
+    </nav>
+
+    <div class="bg-light border-bottom">
+        <div class="container">
+            <app-breadcrumbs></app-breadcrumbs>
+        </div>
+    </div>
+</header>
+
+<main class="flex-grow-1">
+    <div class="container mt-4">
+        <router-outlet></router-outlet>
+    </div>
+    <app-toast-container></app-toast-container>
+</main>
+
+<footer class="mt-5 py-4 bg-dark text-white-50">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h5 class="text-white">
+                    <i class="fas fa-car me-2"></i>Taller Mecánico
+                </h5>
+                <p class="mb-0">Sistema de gestión para taller mecánico</p>
+                <small>Proyecto Universitario - Desarrollo Web Avanzado</small>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-white">Módulos</h6>
+                <ul class="list-unstyled">
+                    <li><a routerLink="/ordenes" class="text-white-50">Órdenes</a></li>
+                    <li><a routerLink="/clientes" class="text-white-50">Clientes</a></li>
+                    <li><a routerLink="/vehiculos" class="text-white-50">Vehículos</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h6 class="text-white">Catálogos</h6>
+                <ul class="list-unstyled">
+                    <li><a routerLink="/servicios" class="text-white-50">Servicios</a></li>
+                    <li><a routerLink="/productos" class="text-white-50">Productos</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="bg-secondary">
+        <div class="row">
+            <div class="col-md-6">
+                <small>&copy; {{ currentYear }} - Proyecto Universitario</small>
+            </div>
+            <div class="col-md-6 text-end">
+                <small>Backend: .NET 10 + ABP | Frontend: Angular</small>
+            </div>
+        </div>
+    </div>
+</footer>
