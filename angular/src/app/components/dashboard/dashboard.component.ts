@@ -4,12 +4,13 @@ import { RouterModule } from '@angular/router';
 import { OrdenServicioService } from '../../services/orden-servicio.service';
 import { ClienteService } from '../../services/cliente.service';
 import { VehiculoService } from '../../services/vehiculo.service';
+import { AuthDebugService } from 'src/app/auth/services/auth-debug.service';
 
 @Component({
-    selector: 'app-dashboard',
-    standalone: true,
-    imports: [CommonModule, RouterModule],
-    template: `
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterModule],
+  template: `
     <div class="container mt-4">
       <h2>Dashboard - Taller Mecánico</h2>
       <p class="text-muted">Resumen general del sistema</p>
@@ -94,8 +95,11 @@ import { VehiculoService } from '../../services/vehiculo.service';
                   <span class="badge bg-secondary">{{ item.cantidad }}</span>
                 </div>
                 <div class="progress" style="height: 10px;">
-                  <div class="progress-bar" [ngClass]="getProgressBarClass(item.estado)" 
-                       [style.width]="getPorcentaje(item.cantidad) + '%'"></div>
+                  <div
+                    class="progress-bar"
+                    [ngClass]="getProgressBarClass(item.estado)"
+                    [style.width]="getPorcentaje(item.cantidad) + '%'"
+                  ></div>
                 </div>
               </div>
             </div>
@@ -103,142 +107,189 @@ import { VehiculoService } from '../../services/vehiculo.service';
         </div>
 
         <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header">
-                <h5 class="mb-0">Acciones Rápidas</h5>
-                </div>
-                <div class="card-body">
-                <div class="row g-2">
-                    <!-- Fila 1 -->
-                    <div class="col-6">
-                    <button class="btn btn-primary w-100 h-100 py-3" routerLink="/ordenes/nueva">
-                        <i class="fas fa-plus-circle fa-2x mb-2"></i><br>
-                        Nueva Orden
-                    </button>
-                    </div>
-                    <div class="col-6">
-                    <button class="btn btn-success w-100 h-100 py-3" routerLink="/clientes">
-                        <i class="fas fa-user-plus fa-2x mb-2"></i><br>
-                        Nuevo Cliente
-                    </button>
-                    </div>
-                    <!-- Fila 2 -->
-                    <div class="col-6">
-                    <button class="btn btn-warning w-100 h-100 py-3" routerLink="/servicios">
-                        <i class="fas fa-tools fa-2x mb-2"></i><br>
-                        Servicios
-                    </button>
-                    </div>
-                    <div class="col-6">
-                    <button class="btn btn-info w-100 h-100 py-3" routerLink="/productos">
-                        <i class="fas fa-box fa-2x mb-2"></i><br>
-                        Productos
-                    </button>
-                    </div>
-                    <!-- Fila 3 -->
-                    <div class="col-12 mt-2">
-                    <div class="btn-group w-100">
-                        <button class="btn btn-outline-secondary" routerLink="/ordenes">
-                        <i class="fas fa-clipboard-list"></i> Ver Órdenes
-                        </button>
-                        <button class="btn btn-outline-secondary" routerLink="/vehiculos">
-                        <i class="fas fa-car"></i> Ver Vehículos
-                        </button>
-                    </div>
-                    </div>
-                </div>
-                </div>
+          <div class="card h-100">
+            <div class="card-header">
+              <h5 class="mb-0">Acciones Rápidas</h5>
             </div>
+            <div class="card-body">
+              <div class="row g-2">
+                <!-- Fila 1 -->
+                <div class="col-6">
+                  <button class="btn btn-primary w-100 h-100 py-3" routerLink="/ordenes/nueva">
+                    <i class="fas fa-plus-circle fa-2x mb-2"></i><br />
+                    Nueva Orden
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-success w-100 h-100 py-3" routerLink="/clientes">
+                    <i class="fas fa-user-plus fa-2x mb-2"></i><br />
+                    Nuevo Cliente
+                  </button>
+                </div>
+                <!-- Fila 2 -->
+                <div class="col-6">
+                  <button class="btn btn-warning w-100 h-100 py-3" routerLink="/servicios">
+                    <i class="fas fa-tools fa-2x mb-2"></i><br />
+                    Servicios
+                  </button>
+                </div>
+                <div class="col-6">
+                  <button class="btn btn-info w-100 h-100 py-3" routerLink="/productos">
+                    <i class="fas fa-box fa-2x mb-2"></i><br />
+                    Productos
+                  </button>
+                </div>
+                <!-- Fila 3 -->
+                <div class="col-12 mt-2">
+                  <div class="btn-group w-100">
+                    <button class="btn btn-outline-secondary" routerLink="/ordenes">
+                      <i class="fas fa-clipboard-list"></i> Ver Órdenes
+                    </button>
+                    <button class="btn btn-outline-secondary" routerLink="/vehiculos">
+                      <i class="fas fa-car"></i> Ver Vehículos
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `,
-    styles: [`
-    .progress-bar-cotizacion { background-color: #6c757d; }
-    .progress-bar-aprobada { background-color: #0d6efd; }
-    .progress-bar-en_progreso { background-color: #ffc107; }
-    .progress-bar-completada { background-color: #198754; }
-    .progress-bar-facturada { background-color: #6f42c1; }
-  `]
+  styles: [
+    `
+      .progress-bar-cotizacion {
+        background-color: #6c757d;
+      }
+      .progress-bar-aprobada {
+        background-color: #0d6efd;
+      }
+      .progress-bar-en_progreso {
+        background-color: #ffc107;
+      }
+      .progress-bar-completada {
+        background-color: #198754;
+      }
+      .progress-bar-facturada {
+        background-color: #6f42c1;
+      }
+    `,
+  ],
 })
 export class DashboardComponent implements OnInit {
-    loading = true;
-    estadisticas = {
-        totalOrdenes: 0,
-        totalClientes: 0,
-        totalVehiculos: 0,
-        ingresosHoy: 0,
-        ordenesPorEstado: [] as { estado: string, cantidad: number }[]
-    };
+  loading = true;
+  estadisticas = {
+    totalOrdenes: 0,
+    totalClientes: 0,
+    totalVehiculos: 0,
+    ingresosHoy: 0,
+    ordenesPorEstado: [] as { estado: string; cantidad: number }[],
+  };
 
-    constructor(
-        private ordenService: OrdenServicioService,
-        private clienteService: ClienteService,
-        private vehiculoService: VehiculoService
-    ) { }
+  constructor(
+    private ordenService: OrdenServicioService,
+    private clienteService: ClienteService,
+    private vehiculoService: VehiculoService,
+    private authDebugService: AuthDebugService,
+  ) {}
 
-    ngOnInit(): void {
-        this.cargarEstadisticas();
-    }
+  ngOnInit(): void {
+    console.log('🏠 [DASHBOARD] Componente inicializado');
 
-    cargarEstadisticas(): void {
-        this.loading = true;
+    // Debug de autenticación
+    this.authDebugService.debugAuthStatus();
 
-        // Cargar todos los datos en paralelo
-        this.ordenService.getAll().subscribe({
-            next: (ordenesRes) => {
-                if (ordenesRes.success) {
-                    const ordenes = ordenesRes.data;
-                    this.estadisticas.totalOrdenes = ordenes.length;
+    // Verificar token cada segundo (solo para debug)
+    const debugInterval = setInterval(() => {
+      const token = localStorage.getItem('access_token');
+      const user = localStorage.getItem('currentUser');
+      console.log('🔍 [DASHBOARD DEBUG] Estado actual:');
+      console.log('- Token:', token ? 'PRESENTE' : 'AUSENTE');
+      console.log('- User:', user ? 'PRESENTE' : 'AUSENTE');
+      console.log(
+        '- Cookies de auth:',
+        document.cookie.includes('.AspNetCore.Identity.Application') ? 'SÍ' : 'NO',
+      );
+    }, 1000);
 
-                    // Calcular ingresos de hoy
-                    const hoy = new Date().toISOString().split('T')[0];
-                    this.estadisticas.ingresosHoy = ordenes
-                        .filter(o => o.fechaEntrada.split('T')[0] === hoy)
-                        .reduce((sum, o) => sum + o.total, 0);
+    // Limpiar después de 10 segundos
+    setTimeout(() => clearInterval(debugInterval), 10000);
 
-                    // Agrupar por estado
-                    const estados = ['COTIZACION', 'APROBADA', 'EN_PROGRESO', 'COMPLETADA', 'FACTURADA', 'CANCELADA'];
-                    this.estadisticas.ordenesPorEstado = estados.map(estado => ({
-                        estado,
-                        cantidad: ordenes.filter(o => o.estado === estado).length
-                    }));
-                }
-            }
-        });
+    this.cargarEstadisticas();
+  }
 
-        this.clienteService.getAll().subscribe({
-            next: (clientesRes) => {
-                if (clientesRes.success) {
-                    this.estadisticas.totalClientes = clientesRes.data.length;
-                }
-            }
-        });
+  cargarEstadisticas(): void {
+    this.loading = true;
 
-        this.vehiculoService.getAll().subscribe({
-            next: (vehiculosRes) => {
-                if (vehiculosRes.success) {
-                    this.estadisticas.totalVehiculos = vehiculosRes.data.length;
-                    this.loading = false;
-                }
-            },
-            error: () => this.loading = false
-        });
-    }
+    // Cargar todos los datos en paralelo
+    this.ordenService.getAll().subscribe({
+      next: ordenesRes => {
+        if (ordenesRes.success) {
+          const ordenes = ordenesRes.data;
+          this.estadisticas.totalOrdenes = ordenes.length;
 
-    getProgressBarClass(estado: string): string {
-        switch (estado.toUpperCase()) {
-            case 'COTIZACION': return 'progress-bar-cotizacion';
-            case 'APROBADA': return 'progress-bar-aprobada';
-            case 'EN_PROGRESO': return 'progress-bar-en_progreso';
-            case 'COMPLETADA': return 'progress-bar-completada';
-            case 'FACTURADA': return 'progress-bar-facturada';
-            default: return 'bg-secondary';
+          // Calcular ingresos de hoy
+          const hoy = new Date().toISOString().split('T')[0];
+          this.estadisticas.ingresosHoy = ordenes
+            .filter(o => o.fechaEntrada.split('T')[0] === hoy)
+            .reduce((sum, o) => sum + o.total, 0);
+
+          // Agrupar por estado
+          const estados = [
+            'COTIZACION',
+            'APROBADA',
+            'EN_PROGRESO',
+            'COMPLETADA',
+            'FACTURADA',
+            'CANCELADA',
+          ];
+          this.estadisticas.ordenesPorEstado = estados.map(estado => ({
+            estado,
+            cantidad: ordenes.filter(o => o.estado === estado).length,
+          }));
         }
-    }
+      },
+    });
 
-    getPorcentaje(cantidad: number): number {
-        if (this.estadisticas.totalOrdenes === 0) return 0;
-        return (cantidad / this.estadisticas.totalOrdenes) * 100;
+    this.clienteService.getAll().subscribe({
+      next: clientesRes => {
+        if (clientesRes.success) {
+          this.estadisticas.totalClientes = clientesRes.data.length;
+        }
+      },
+    });
+
+    this.vehiculoService.getAll().subscribe({
+      next: vehiculosRes => {
+        if (vehiculosRes.success) {
+          this.estadisticas.totalVehiculos = vehiculosRes.data.length;
+          this.loading = false;
+        }
+      },
+      error: () => (this.loading = false),
+    });
+  }
+
+  getProgressBarClass(estado: string): string {
+    switch (estado.toUpperCase()) {
+      case 'COTIZACION':
+        return 'progress-bar-cotizacion';
+      case 'APROBADA':
+        return 'progress-bar-aprobada';
+      case 'EN_PROGRESO':
+        return 'progress-bar-en_progreso';
+      case 'COMPLETADA':
+        return 'progress-bar-completada';
+      case 'FACTURADA':
+        return 'progress-bar-facturada';
+      default:
+        return 'bg-secondary';
     }
+  }
+
+  getPorcentaje(cantidad: number): number {
+    if (this.estadisticas.totalOrdenes === 0) return 0;
+    return (cantidad / this.estadisticas.totalOrdenes) * 100;
+  }
 }

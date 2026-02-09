@@ -1,4 +1,3 @@
-// angular/src/app/auth/login/login.component.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,8 +34,8 @@ import { AuthService } from '../services/auth.service';
                 <button type="button" class="btn-close" (click)="error = ''"></button>
               </div>
 
-              <!-- Formulario -->
-              <form #loginForm="ngForm" (ngSubmit)="onSubmit()" novalidate>
+              <!-- Formulario - AGREGAR $event.preventDefault() -->
+              <form #loginForm="ngForm" (ngSubmit)="onSubmit($event)" novalidate>
                 <div class="mb-3">
                   <label class="form-label fw-semibold">Usuario</label>
                   <div class="input-group">
@@ -135,9 +134,16 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) {
+    // Si ya está autenticado, redirigir inmediatamente
+    if (this.authService.isAuthenticated()) {
+      // this.navigateToDashboard();
+    }
+  }
 
-  onSubmit(): void {
+  onSubmit(event: Event): void {
+    event.preventDefault(); // ¡ESTO ES CRÍTICO! Previene recarga de página
+    
     this.submitted = true;
     
     if (!this.credentials.username || !this.credentials.password) {
@@ -150,7 +156,11 @@ export class LoginComponent {
     this.authService.login(this.credentials).subscribe({
       next: () => {
         this.loading = false;
-        // La redirección se maneja en el servicio
+        console.log('Login successful in component');
+        // Redirigir desde el componente también, por seguridad
+        // setTimeout(() => {
+        //   this.navigateToDashboard();
+        // }, 100);
       },
       error: (err) => {
         this.loading = false;
@@ -162,7 +172,20 @@ export class LoginComponent {
 
   mockLogin(): void {
     this.authService.mockLogin();
+    // setTimeout(() => {
+    //   this.navigateToDashboard();
+    // }, 100);
   }
+
+  // private navigateToDashboard(): void {
+  //   this.router.navigateByUrl('/dashboard', { replaceUrl: true }).then(success => {
+  //     if (success) {
+  //       console.log('Navigated to dashboard successfully');
+  //     } else {
+  //       console.error('Failed to navigate to dashboard');
+  //     }
+  //   });
+  // }
 
   private getErrorMessage(error: any): string {
     if (error.status === 0) {
