@@ -27,40 +27,68 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label">Código *</label>
-                <input type="text" class="form-control" 
-                       [(ngModel)]="nuevoServicio.codigo" 
-                       name="codigo" 
-                       required
-                       placeholder="Ej: SER-001">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="nuevoServicio.codigo"
+                  name="codigo"
+                  required
+                  placeholder="Ej: SER-001"
+                />
               </div>
               <div class="col-md-8">
                 <label class="form-label">Nombre *</label>
-                <input type="text" class="form-control" 
-                       [(ngModel)]="nuevoServicio.nombre" 
-                       name="nombre" 
-                       required
-                       placeholder="Ej: Cambio de aceite">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="nuevoServicio.nombre"
+                  name="nombre"
+                  required
+                  placeholder="Ej: Cambio de aceite"
+                />
               </div>
               <div class="col-12">
                 <label class="form-label">Descripción</label>
-                <textarea class="form-control" 
-                          [(ngModel)]="nuevoServicio.descripcion" 
-                          name="descripcion" 
-                          rows="3"
-                          placeholder="Descripción detallada del servicio..."></textarea>
+                <textarea
+                  class="form-control"
+                  [(ngModel)]="nuevoServicio.descripcion"
+                  name="descripcion"
+                  rows="3"
+                  placeholder="Descripción detallada del servicio..."
+                ></textarea>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Precio *</label>
                 <div class="input-group">
                   <span class="input-group-text">$</span>
-                  <input type="number" class="form-control" 
-                         [(ngModel)]="nuevoServicio.precio" 
-                         name="precio" 
-                         required
-                         min="0" 
-                         step="0.01"
-                         placeholder="0.00">
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="nuevoServicio.precio"
+                    name="precio"
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
                 </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Duración Estimada *</label>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    class="form-control"
+                    [(ngModel)]="nuevoServicio.duracionEstimada"
+                    name="duracionEstimada"
+                    required
+                    min="0"
+                    step="1"
+                    placeholder="30"
+                  />
+                  <span class="input-group-text">minutos</span>
+                </div>
+                <small class="text-muted">Tiempo estimado para completar el servicio</small>
               </div>
               <div class="col-12">
                 <div class="d-flex gap-2">
@@ -86,10 +114,13 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
                 <span class="input-group-text">
                   <i class="fas fa-search"></i>
                 </span>
-                <input type="text" class="form-control" 
-                       placeholder="Buscar por nombre o código..." 
-                       [(ngModel)]="terminoBusqueda"
-                       (input)="filtrarServicios()">
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Buscar por nombre o código..."
+                  [(ngModel)]="terminoBusqueda"
+                  (input)="filtrarServicios()"
+                />
               </div>
             </div>
             <div class="col-md-4">
@@ -125,6 +156,7 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
                   <th>Nombre</th>
                   <th>Descripción</th>
                   <th class="text-end">Precio</th>
+                  <th class="text-center">Duración</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
@@ -137,17 +169,28 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
                     <strong>{{ servicio.nombre }}</strong>
                   </td>
                   <td>
-                    <small class="text-muted">{{ servicio.descripcion || 'Sin descripción' | slice:0:50 }}{{ servicio.descripcion && servicio.descripcion.length > 50 ? '...' : '' }}</small>
+                    <small class="text-muted"
+                      >{{ servicio.descripcion || 'Sin descripción' | slice: 0 : 50
+                      }}{{
+                        servicio.descripcion && servicio.descripcion.length > 50 ? '...' : ''
+                      }}</small
+                    >
                   </td>
                   <td class="text-end">
                     <span class="badge bg-success fs-6">{{ servicio.precio.toFixed(2) }}</span>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge bg-info"> {{ servicio.duracionEstimada || 0 }} min </span>
                   </td>
                   <td>
                     <div class="btn-group btn-group-sm">
                       <button class="btn btn-outline-warning" (click)="editarServicio(servicio)">
                         <i class="fas fa-edit"></i>
                       </button>
-                      <button class="btn btn-outline-danger" (click)="eliminarServicio(servicio.id)">
+                      <button
+                        class="btn btn-outline-danger"
+                        (click)="eliminarServicio(servicio.id)"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                       <button class="btn btn-outline-info" (click)="usarEnOrden(servicio)">
@@ -157,14 +200,19 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
                   </td>
                 </tr>
                 <tr *ngIf="serviciosFiltrados.length === 0">
-                  <td colspan="5" class="text-center text-muted py-4">
-                    {{ servicios.length === 0 ? 'No hay servicios registrados' : 'No se encontraron servicios con ese criterio' }}
+                  <td colspan="6" class="text-center text-muted py-4">
+                    <!-- ✅ DE 5 A 6 -->
+                    {{
+                      servicios.length === 0
+                        ? 'No hay servicios registrados'
+                        : 'No se encontraron servicios con ese criterio'
+                    }}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          
+
           <!-- Resumen -->
           <div class="mt-3 pt-3 border-top">
             <div class="row">
@@ -183,24 +231,25 @@ import { ServicioService, Servicio } from '../../services/servicio.service';
         </div>
       </div>
     </div>
-  `
+  `,
 })
 export class ServiciosListComponent implements OnInit {
   servicios: Servicio[] = [];
   serviciosFiltrados: Servicio[] = [];
   loading = false;
   error: string | null = null;
-  
+
   mostrandoFormulario = false;
   servicioEditando: Servicio | null = null;
   terminoBusqueda = '';
   ordenarPor = 'nombre';
-  
+
   nuevoServicio = {
     codigo: '',
     nombre: '',
     descripcion: '',
-    precio: 0
+    precio: 0,
+    duracionEstimada: 30, // ✅ VALOR POR DEFECTO
   };
 
   constructor(private servicioService: ServicioService) {}
@@ -212,17 +261,17 @@ export class ServiciosListComponent implements OnInit {
   cargarServicios(): void {
     this.loading = true;
     this.servicioService.getAll().subscribe({
-      next: (response) => {
+      next: response => {
         if (response.success) {
           this.servicios = response.data;
           this.filtrarServicios();
         }
         this.loading = false;
       },
-      error: (err) => {
+      error: err => {
         this.error = 'Error al cargar servicios: ' + err.message;
         this.loading = false;
-      }
+      },
     });
   }
 
@@ -234,7 +283,13 @@ export class ServiciosListComponent implements OnInit {
 
   editarServicio(servicio: Servicio): void {
     this.servicioEditando = servicio;
-    this.nuevoServicio = { ...servicio };
+    this.nuevoServicio = {
+      codigo: servicio.codigo,
+      nombre: servicio.nombre,
+      descripcion: servicio.descripcion || '',
+      precio: servicio.precio,
+      duracionEstimada: servicio.duracionEstimada ?? 30, // ✅ VALOR POR DEFECTO SI ES NULL
+    };
     this.mostrandoFormulario = true;
   }
 
@@ -249,7 +304,8 @@ export class ServiciosListComponent implements OnInit {
       codigo: '',
       nombre: '',
       descripcion: '',
-      precio: 0
+      precio: 0,
+      duracionEstimada: 30,
     };
   }
 
@@ -257,7 +313,7 @@ export class ServiciosListComponent implements OnInit {
     if (this.servicioEditando) {
       // Actualizar
       this.servicioService.update(this.servicioEditando.id, this.nuevoServicio).subscribe({
-        next: (response) => {
+        next: response => {
           if (response.success) {
             const index = this.servicios.findIndex(s => s.id === this.servicioEditando!.id);
             if (index !== -1) {
@@ -268,14 +324,14 @@ export class ServiciosListComponent implements OnInit {
             alert('Servicio actualizado correctamente');
           }
         },
-        error: (err) => {
+        error: err => {
           alert('Error al actualizar servicio: ' + err.message);
-        }
+        },
       });
     } else {
       // Crear nuevo
       this.servicioService.create(this.nuevoServicio).subscribe({
-        next: (response) => {
+        next: response => {
           if (response.success) {
             this.servicios.push(response.data);
             this.filtrarServicios();
@@ -283,9 +339,9 @@ export class ServiciosListComponent implements OnInit {
             alert('Servicio creado correctamente');
           }
         },
-        error: (err) => {
+        error: err => {
           alert('Error al crear servicio: ' + err.message);
-        }
+        },
       });
     }
   }
@@ -293,26 +349,26 @@ export class ServiciosListComponent implements OnInit {
   eliminarServicio(id: string): void {
     if (confirm('¿Está seguro de eliminar este servicio?')) {
       this.servicioService.delete(id).subscribe({
-        next: (response) => {
+        next: response => {
           if (response.success) {
             this.servicios = this.servicios.filter(s => s.id !== id);
             this.filtrarServicios();
             alert('Servicio eliminado correctamente');
           }
         },
-        error: (err) => {
+        error: err => {
           alert('Error al eliminar servicio: ' + err.message);
-        }
+        },
       });
     }
   }
 
   usarEnOrden(servicio: Servicio): void {
-    // Esto podría redirigir a crear una nueva orden con este servicio pre-seleccionado
     const servicioData = {
       id: servicio.id,
       nombre: servicio.nombre,
-      precio: servicio.precio
+      precio: servicio.precio,
+      duracionEstimada: servicio.duracionEstimada, // ✅ INCLUIR DURACIÓN
     };
     localStorage.setItem('servicioSeleccionado', JSON.stringify(servicioData));
     alert(`Servicio "${servicio.nombre}" listo para usar en nueva orden`);
@@ -323,10 +379,11 @@ export class ServiciosListComponent implements OnInit {
       this.serviciosFiltrados = [...this.servicios];
     } else {
       const termino = this.terminoBusqueda.toLowerCase();
-      this.serviciosFiltrados = this.servicios.filter(servicio =>
-        servicio.nombre.toLowerCase().includes(termino) ||
-        servicio.codigo.toLowerCase().includes(termino) ||
-        (servicio.descripcion && servicio.descripcion.toLowerCase().includes(termino))
+      this.serviciosFiltrados = this.servicios.filter(
+        servicio =>
+          servicio.nombre.toLowerCase().includes(termino) ||
+          servicio.codigo.toLowerCase().includes(termino) ||
+          (servicio.descripcion && servicio.descripcion.toLowerCase().includes(termino)),
       );
     }
     this.ordenarServicios();
@@ -345,6 +402,16 @@ export class ServiciosListComponent implements OnInit {
         break;
       case 'precioDesc':
         this.serviciosFiltrados.sort((a, b) => b.precio - a.precio);
+        break;
+      case 'duracionAsc':
+        this.serviciosFiltrados.sort(
+          (a, b) => (a.duracionEstimada || 0) - (b.duracionEstimada || 0),
+        );
+        break;
+      case 'duracionDesc':
+        this.serviciosFiltrados.sort(
+          (a, b) => (b.duracionEstimada || 0) - (a.duracionEstimada || 0),
+        );
         break;
     }
   }

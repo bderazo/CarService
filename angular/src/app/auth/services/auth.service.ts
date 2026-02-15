@@ -13,9 +13,6 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  // Para ABP con cookies, no necesitamos guardar token en localStorage
-  // Solo guardamos user info
-
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -28,20 +25,14 @@ export class AuthService {
 
   private loadStoredUser(): void {
     try {
-      // Buscar en sessionStorage primero
       let userStr = sessionStorage.getItem('currentUser');
-
-      // Si no hay en sessionStorage, buscar en localStorage
       if (!userStr) {
         userStr = localStorage.getItem('currentUser');
       }
-
       if (userStr) {
         const user = JSON.parse(userStr);
         this.currentUserSubject.next(user);
-        console.log('✅ [AUTH] Usuario cargado desde storage:', user.username);
-      } else {
-        console.log('ℹ️ [AUTH] No hay usuario en storage');
+        console.log('✅ [AUTH] Usuario cargado:', user.username);
       }
     } catch (e) {
       console.error('Error cargando usuario:', e);
@@ -50,7 +41,7 @@ export class AuthService {
   }
 
   login(credentials: any): Observable<any> {
-    console.log('🔐 [AUTH] Login para usuario:', credentials.username);
+    console.log('🔐 [AUTH] Login:', credentials.username);
 
     const body = new URLSearchParams();
     body.set('username', credentials.username);
@@ -67,59 +58,60 @@ export class AuthService {
       })
       .pipe(
         tap((response: any) => {
-          console.log('✅ [AUTH] Login API response recibida');
           if (isPlatformBrowser(this.platformId)) {
             this.handleLoginSuccess(response);
           }
         }),
-        catchError(error => {
-          console.error('❌ [AUTH] Login API error:', error);
-          return throwError(() => error);
-        }),
+        catchError(error => throwError(() => error)),
       );
   }
 
   private handleLoginSuccess(response: any): void {
-    console.log('=== START handleLoginSuccess ===');
-
     const accessToken = response.access_token;
+    if (!accessToken) throw new Error('No access token received');
 
-    if (!accessToken) {
-      console.error('❌ No se recibió token del backend');
-      throw new Error('No access token received');
+    sessionStorage.setItem('access_token', accessToken);
+
+    const userInfo = this.decodeJwt(accessToken);
+
+    // 1. Extraer roles
+    let roles = this.extractRoles(userInfo);
+
+    // 2. SIEMPRE asegurar que sea ARRAY
+    if (!Array.isArray(roles)) {
+      roles = roles ? [roles] : [];
     }
 
-    // ⭐ USAR sessionStorage EN LUGAR DE localStorage
-    // sessionStorage no es limpiado por ABP
-    sessionStorage.setItem('access_token', accessToken);
-    console.log('💾 Token guardado en SESSIONSTORAGE');
-
-    // Decodificar token
-    const userInfo = this.decodeJwt(accessToken);
+    // 3. ✅ NORMALIZAR: minúsculas + TRIM (elimina espacios)
+    roles = roles.map((rol: string) => rol.toLowerCase().trim());
 
     const user = {
       id: userInfo.sub || 'unknown',
       username: userInfo.name || userInfo.preferred_username || 'admin',
       email: userInfo.email || 'admin@abp.io',
-      roles: Array.isArray(userInfo.role)
-        ? userInfo.role
-        : userInfo.role
-          ? [userInfo.role]
-          : ['admin'],
+      roles: roles, // ✅ AHORA ['recepcionista'] SIN ESPACIOS
     };
 
+    console.log('✅ [AUTH] Usuario guardado con roles:', user.roles);
     sessionStorage.setItem('currentUser', JSON.stringify(user));
     this.currentUserSubject.next(user);
-    console.log('💾 Usuario guardado en SESSIONSTORAGE');
+    this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+  }
 
-    // Navegar
-    setTimeout(() => {
-      this.router.navigateByUrl('/dashboard', {
-        replaceUrl: true,
-      });
-    }, 50);
-
-    console.log('=== END handleLoginSuccess ===');
+  // ✅ MEJORAR extractRoles() para que SIEMPRE devuelva array
+  private extractRoles(userInfo: any): string[] {
+    // Intentar diferentes formatos que puede tener el token
+    if (userInfo.role) {
+      return Array.isArray(userInfo.role) ? userInfo.role : [userInfo.role];
+    }
+    if (userInfo.roles) {
+      return Array.isArray(userInfo.roles) ? userInfo.roles : [userInfo.roles];
+    }
+    if (userInfo['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']) {
+      const roleClaim = userInfo['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+      return Array.isArray(roleClaim) ? roleClaim : [roleClaim];
+    }
+    return []; // ✅ SIEMPRE array, aunque sea vacío
   }
 
   private decodeJwt(token: string): any {
@@ -129,12 +121,9 @@ export class AuthService {
       const jsonPayload = decodeURIComponent(
         atob(base64)
           .split('')
-          .map(c => {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-          })
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
           .join(''),
       );
-
       return JSON.parse(jsonPayload);
     } catch (e) {
       console.error('Error decodificando JWT:', e);
@@ -142,8 +131,117 @@ export class AuthService {
     }
   }
 
+  // ✅ NUEVO: Métodos para roles
+  getCurrentUser(): any {
+    const sessionUser = sessionStorage.getItem('currentUser');
+    if (sessionUser) {
+      try {
+        const user = JSON.parse(sessionUser);
+        // ✅ ASEGURAR que roles sea array
+        if (user.roles && !Array.isArray(user.roles)) {
+          user.roles = [user.roles];
+        }
+        return user;
+      } catch (e) {}
+    }
+
+    const localUser = localStorage.getItem('currentUser');
+    if (localUser) {
+      try {
+        const user = JSON.parse(localUser);
+        // ✅ ASEGURAR que roles sea array
+        if (user.roles && !Array.isArray(user.roles)) {
+          user.roles = [user.roles];
+        }
+        return user;
+      } catch (e) {}
+    }
+
+    return this.currentUserSubject.value;
+  }
+
+  // ✅ MEJORAR getUserRoles() para que SIEMPRE devuelva array
+  getUserRoles(): string[] {
+    const user = this.getCurrentUser();
+    if (!user) return [];
+
+    // Si es string, convertir a array
+    if (typeof user.roles === 'string') {
+      return [user.roles];
+    }
+
+    // Si es array, devolverlo
+    if (Array.isArray(user.roles)) {
+      return user.roles;
+    }
+
+    // Cualquier otro caso
+    return [];
+  }
+
+  hasRole(rol: string): boolean {
+    const roles = this.getUserRoles();
+    // ✅ COMPARAR EN MINÚSCULAS SIEMPRE
+    return roles.includes(rol.toLowerCase());
+  }
+
+  hasAnyRole(rolesPermitidos: string[]): boolean {
+    const userRoles = this.getUserRoles();
+    // ✅ NORMALIZAR AMBOS ARRAYS A MINÚSCULAS
+    const userRolesLower = userRoles.map(r => r.toLowerCase());
+    const rolesPermitidosLower = rolesPermitidos.map(r => r.toLowerCase());
+
+    return rolesPermitidosLower.some(rol => userRolesLower.includes(rol));
+  }
+
+  hasAllRoles(rolesRequeridos: string[]): boolean {
+    const userRoles = this.getUserRoles();
+    const userRolesLower = userRoles.map(r => r.toLowerCase());
+    const rolesRequeridosLower = rolesRequeridos.map(r => r.toLowerCase());
+
+    return rolesRequeridosLower.every(rol => userRolesLower.includes(rol));
+  }
+
+  isAdmin(): boolean {
+    return this.hasRole('admin');
+  }
+
+  isRecepcionista(): boolean {
+    return this.hasRole('recepcionista');
+  }
+
+  isMecanico(): boolean {
+    return this.hasRole('mecanico'); // ✅ CON ACENTO (viene del backend)
+  }
+
+  isLavador(): boolean {
+    return this.hasRole('lavacoches');
+  }
+
+  isAuthenticated(): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+
+    const token = this.getToken();
+    const user = this.getCurrentUser();
+
+    if (!token || !user) return false;
+
+    try {
+      const decoded = this.decodeJwt(token);
+      const now = Date.now() / 1000;
+      return decoded.exp > now;
+    } catch {
+      return false;
+    }
+  }
+
+  getToken(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    return sessionStorage.getItem('access_token') || localStorage.getItem('access_token');
+  }
+
   logout(): void {
-    console.log('🚪 [AUTH] Logout llamado');
+    console.log('🚪 [AUTH] Logout');
     if (isPlatformBrowser(this.platformId)) {
       this.clearAuth();
     }
@@ -151,8 +249,6 @@ export class AuthService {
   }
 
   private clearAuth(): void {
-    console.log('🧹 [AUTH] Limpiando datos de auth');
-    // Limpiar de ambos storages
     sessionStorage.removeItem('access_token');
     sessionStorage.removeItem('currentUser');
     localStorage.removeItem('access_token');
@@ -160,144 +256,7 @@ export class AuthService {
     this.currentUserSubject.next(null);
   }
 
-  getCurrentUser(): any {
-    // Buscar en sessionStorage primero
-    const sessionUser = sessionStorage.getItem('currentUser');
-    if (sessionUser) {
-      try {
-        return JSON.parse(sessionUser);
-      } catch (e) {
-        console.error('Error parseando usuario de sessionStorage:', e);
-      }
-    }
-
-    // Luego buscar en localStorage
-    const localUser = localStorage.getItem('currentUser');
-    if (localUser) {
-      try {
-        return JSON.parse(localUser);
-      } catch (e) {
-        console.error('Error parseando usuario de localStorage:', e);
-      }
-    }
-
-    return this.currentUserSubject.value;
-  }
-
-  isAuthenticated(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return false;
-
-    console.log('🔐 [AUTH] Verificación completa de autenticación:');
-
-    // ⭐ BUSCAR EN SESSIONSTORAGE (donde lo guardas)
-    const sessionToken = sessionStorage.getItem('access_token');
-    const sessionUser = sessionStorage.getItem('currentUser');
-
-    // También verificar localStorage por compatibilidad
-    const localToken = localStorage.getItem('access_token');
-    const localUser = localStorage.getItem('currentUser');
-
-    console.log('- Token en sessionStorage:', sessionToken ? 'SÍ' : 'NO');
-    console.log('- Usuario en sessionStorage:', sessionUser ? 'SÍ' : 'NO');
-    console.log('- Token en localStorage:', localToken ? 'SÍ' : 'NO');
-    console.log('- Usuario en localStorage:', localUser ? 'SÍ' : 'NO');
-
-    // Usar sessionStorage primero, luego localStorage
-    const token = sessionToken || localToken;
-    const userStr = sessionUser || localUser;
-
-    if (!token) {
-      console.log('❌ [AUTH] No hay token en ningún storage');
-      return false;
-    }
-
-    if (!userStr) {
-      console.log('❌ [AUTH] No hay usuario en ningún storage');
-      return false;
-    }
-
-    // Verificar si el token es válido (no expirado)
-    try {
-      const decoded = this.decodeJwt(token);
-      const now = Date.now() / 1000;
-      const isValid = decoded.exp > now;
-
-      console.log('📅 [AUTH] Validación token:');
-      console.log('- Token exp:', decoded.exp);
-      console.log('- Now:', now);
-      console.log('- Token válido (no expirado):', isValid);
-
-      if (!isValid) {
-        console.log('⚠️ Token expirado, limpiando...');
-        this.clearAuth();
-        return false;
-      }
-
-      console.log(`✅ [AUTH] Usuario AUTENTICADO`);
-      return true;
-    } catch (error) {
-      console.error('Error decodificando token:', error);
-      return false;
-    }
-  }
-
-  // Nuevo método para verificar cookies de auth
-  private hasAuthCookies(): boolean {
-    try {
-      const cookies = document.cookie;
-
-      // Cookies específicas de ABP/ASP.NET Identity
-      const authCookiePatterns = [
-        '.AspNetCore.Identity.Application',
-        '.MecanicApp.Auth',
-        '.AspNetCore.Cookies',
-        'access_token=',
-        'id_token=',
-      ];
-
-      const hasAnyAuthCookie = authCookiePatterns.some(pattern => cookies.includes(pattern));
-
-      if (hasAnyAuthCookie) {
-        console.log('🍪 [AUTH] Cookies de autenticación encontradas');
-
-        // Listar todas las cookies para debug
-        const cookieList = cookies.split(';').map(c => c.trim());
-        const authCookies = cookieList.filter(c =>
-          authCookiePatterns.some(pattern => c.includes(pattern)),
-        );
-        console.log('🍪 [AUTH] Cookies de auth específicas:', authCookies);
-      }
-
-      return hasAnyAuthCookie;
-    } catch (error) {
-      console.error('Error verificando cookies:', error);
-      return false;
-    }
-  }
-
-  getToken(): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-
-    // Buscar en sessionStorage primero
-    const sessionToken = sessionStorage.getItem('access_token');
-    if (sessionToken) {
-      console.log('🔑 [AUTH] Token obtenido de sessionStorage');
-      return sessionToken;
-    }
-
-    // También verificar localStorage por compatibilidad
-    const localToken = localStorage.getItem('access_token');
-    if (localToken) {
-      console.log('🔑 [AUTH] Token obtenido de localStorage');
-      return localToken;
-    }
-
-    console.log('🔑 [AUTH] No hay token disponible');
-    return null;
-  }
-
   mockLogin(): void {
-    console.log('🔄 [AUTH] Mock login llamado');
     if (!isPlatformBrowser(this.platformId)) return;
 
     const mockUser = {
@@ -307,14 +266,8 @@ export class AuthService {
       roles: ['admin'],
     };
 
-    localStorage.setItem('currentUser', JSON.stringify(mockUser));
+    sessionStorage.setItem('currentUser', JSON.stringify(mockUser));
     this.currentUserSubject.next(mockUser);
-    console.log('✅ [AUTH] Mock user guardado');
-
-    setTimeout(() => {
-      this.router.navigateByUrl('/dashboard', {
-        replaceUrl: true,
-      });
-    }, 50);
+    this.router.navigateByUrl('/dashboard', { replaceUrl: true });
   }
 }

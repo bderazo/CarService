@@ -17,58 +17,76 @@
 
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto">
+                    <!-- 🟢 DASHBOARD - TODOS -->
                     <li class="nav-item">
                         <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
                             <i class="fas fa-tachometer-alt me-1"></i> Dashboard
                         </a>
                     </li>
 
-                    <!-- Órdenes como enlace simple -->
-                    <li class="nav-item">
+                    <!-- 🟢 ÓRDENES - TODOS LOS ROLES -->
+                    <li class="nav-item" *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico', 'lavacoches'])">
                         <a class="nav-link" routerLink="/ordenes" routerLinkActive="active">
                             <i class="fas fa-clipboard-list me-1"></i> Órdenes
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <!-- 🟢 CLIENTES - ADMIN + RECEPCIONISTA -->
+                    <li class="nav-item" *ngIf="authService.hasAnyRole(['admin', 'recepcionista'])">
                         <a class="nav-link" routerLink="/clientes" routerLinkActive="active">
                             <i class="fas fa-users me-1"></i> Clientes
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <!-- 🟢 VEHÍCULOS - ADMIN + RECEPCIONISTA + MECÁNICO -->
+                    <li class="nav-item" *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
                         <a class="nav-link" routerLink="/vehiculos" routerLinkActive="active">
                             <i class="fas fa-car me-1"></i> Vehículos
                         </a>
                     </li>
 
-                    <!-- Servicios y Productos como enlaces separados -->
-                    <li class="nav-item">
+                    <!-- 🟢 SERVICIOS - ADMIN + RECEPCIONISTA + MECÁNICO -->
+                    <li class="nav-item" *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
                         <a class="nav-link" routerLink="/servicios" routerLinkActive="active">
                             <i class="fas fa-tools me-1"></i> Servicios
                         </a>
                     </li>
 
-                    <li class="nav-item">
+                    <!-- 🟢 PRODUCTOS - ADMIN + RECEPCIONISTA -->
+                    <li class="nav-item" *ngIf="authService.hasAnyRole(['admin', 'recepcionista'])">
                         <a class="nav-link" routerLink="/productos" routerLinkActive="active">
                             <i class="fas fa-box me-1"></i> Productos
+                        </a>
+                    </li>
+
+                    <!-- 🔵 USUARIOS - SOLO ADMIN -->
+                    <li class="nav-item" *ngIf="authService.hasRole('admin')">
+                        <a class="nav-link" routerLink="/usuarios" routerLinkActive="active">
+                            <i class="fas fa-user-cog me-1"></i> Usuarios
+                        </a>
+                    </li>
+
+                    <!-- 🔵 ROLES - SOLO ADMIN -->
+                    <li class="nav-item" *ngIf="authService.hasRole('admin')">
+                        <a class="nav-link" routerLink="/roles" routerLinkActive="active">
+                            <i class="fas fa-user-tag me-1"></i> Roles
                         </a>
                     </li>
                 </ul>
 
                 <!-- Información del sistema simplificada -->
-                <div class="navbar-text">
-                    <span class="badge bg-success">
-                        <i class="fas fa-server me-1"></i> Backend Online
-                    </span>
-                </div>
+                <span class="badge bg-success me-3">
+                    <i class="fas fa-server me-1"></i> Backend Online
+                </span>
 
+                <!-- 👇 TU CÓDIGO ORIGINAL DE USUARIO - SIN DROPDOWN -->
                 <div class="navbar-text" *ngIf="currentUser; else loginButton">
                     <div class="d-flex align-items-center">
                         <div class="me-3">
                             <small class="text-white-50 d-block">Conectado como</small>
                             <span class="badge bg-info">
                                 <i class="fas fa-user me-1"></i> {{ currentUser.username }}
+                                <span class="badge bg-light text-dark ms-1">{{ getRolPrincipal() }}</span>
                             </span>
                         </div>
                         <div class="vr text-white-50 me-3"></div>
@@ -103,6 +121,7 @@
     <app-toast-container></app-toast-container>
 </main>
 
+<!-- FOOTER (igual, con los mismos *ngIf) -->
 <footer class="mt-5 py-4 bg-dark text-white-50">
     <div class="container">
         <div class="row">
@@ -113,23 +132,48 @@
                 <p class="mb-0">Sistema de gestión para taller mecánico</p>
                 <small>Proyecto Universitario - Desarrollo Web Avanzado</small>
             </div>
-            <div class="col-md-3">
+            
+            <!-- MÓDULOS EN FOOTER -->
+            <div class="col-md-3" *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
                 <h6 class="text-white">Módulos</h6>
                 <ul class="list-unstyled">
-                    <li><a routerLink="/ordenes" class="text-white-50">Órdenes</a></li>
-                    <li><a routerLink="/clientes" class="text-white-50">Clientes</a></li>
-                    <li><a routerLink="/vehiculos" class="text-white-50">Vehículos</a></li>
+                    <li *ngIf="authService.hasAnyRole(['admin', 'recepcionista'])">
+                        <a routerLink="/ordenes" class="text-white-50">Órdenes</a>
+                    </li>
+                    <li *ngIf="authService.hasAnyRole(['admin', 'recepcionista'])">
+                        <a routerLink="/clientes" class="text-white-50">Clientes</a>
+                    </li>
+                    <li *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
+                        <a routerLink="/vehiculos" class="text-white-50">Vehículos</a>
+                    </li>
                 </ul>
             </div>
-            <div class="col-md-3">
+            
+            <!-- CATÁLOGOS EN FOOTER -->
+            <div class="col-md-3" *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
                 <h6 class="text-white">Catálogos</h6>
                 <ul class="list-unstyled">
-                    <li><a routerLink="/servicios" class="text-white-50">Servicios</a></li>
-                    <li><a routerLink="/productos" class="text-white-50">Productos</a></li>
+                    <li *ngIf="authService.hasAnyRole(['admin', 'recepcionista', 'mecanico'])">
+                        <a routerLink="/servicios" class="text-white-50">Servicios</a>
+                    </li>
+                    <li *ngIf="authService.hasAnyRole(['admin', 'recepcionista'])">
+                        <a routerLink="/productos" class="text-white-50">Productos</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- ADMIN SOLO EN FOOTER -->
+            <div class="col-md-3" *ngIf="authService.hasRole('admin')">
+                <h6 class="text-white">Administración</h6>
+                <ul class="list-unstyled">
+                    <li><a routerLink="/usuarios" class="text-white-50">Usuarios</a></li>
+                    <li><a routerLink="/roles" class="text-white-50">Roles</a></li>
                 </ul>
             </div>
         </div>
+        
         <hr class="bg-secondary">
+        
         <div class="row">
             <div class="col-md-6">
                 <small>&copy; {{ currentYear }} - Proyecto Universitario</small>

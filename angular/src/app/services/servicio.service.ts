@@ -9,6 +9,7 @@ export interface Servicio {
   nombre: string;
   descripcion: string;
   precio: number;
+  duracionEstimada?: number;
 }
 
 export interface CreateServicioDto {

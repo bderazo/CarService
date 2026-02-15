@@ -222,20 +222,41 @@ export class DashboardComponent implements OnInit {
   cargarEstadisticas(): void {
     this.loading = true;
 
-    // Cargar todos los datos en paralelo
-    this.ordenService.getAll().subscribe({
-      next: ordenesRes => {
-        if (ordenesRes.success) {
+    Promise.all([
+      this.ordenService.getAll().toPromise(),
+      this.clienteService.getAll().toPromise(),
+      this.vehiculoService.getAll().toPromise(),
+    ])
+      .then(([ordenesRes, clientesRes, vehiculosRes]) => {
+        if (ordenesRes?.success) {
           const ordenes = ordenesRes.data;
           this.estadisticas.totalOrdenes = ordenes.length;
 
-          // Calcular ingresos de hoy
-          const hoy = new Date().toISOString().split('T')[0];
+          const hoy = new Date();
+          const hoyStr = hoy.toISOString().split('T')[0];
+          const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+            .toISOString()
+            .split('T')[0];
+
+          // ✅ INGRESOS HOY (órdenes completadas/facturadas HOY)
           this.estadisticas.ingresosHoy = ordenes
-            .filter(o => o.fechaEntrada.split('T')[0] === hoy)
+            .filter(
+              o =>
+                (o.estado === 'COMPLETADA' || o.estado === 'FACTURADA') &&
+                o.fechaSalida?.split('T')[0] === hoyStr,
+            )
             .reduce((sum, o) => sum + o.total, 0);
 
-          // Agrupar por estado
+          // ✅ INGRESOS MES (opcional - puedes agregar otra tarjeta)
+          // this.estadisticas.ingresosMes = ordenes
+          //   .filter(
+          //     o =>
+          //       (o.estado === 'COMPLETADA' || o.estado === 'FACTURADA') &&
+          //       o.fechaSalida?.split('T')[0] >= inicioMes,
+          //   )
+          //   .reduce((sum, o) => sum + o.total, 0);
+
+          // Órdenes por estado
           const estados = [
             'COTIZACION',
             'APROBADA',
@@ -249,26 +270,21 @@ export class DashboardComponent implements OnInit {
             cantidad: ordenes.filter(o => o.estado === estado).length,
           }));
         }
-      },
-    });
 
-    this.clienteService.getAll().subscribe({
-      next: clientesRes => {
-        if (clientesRes.success) {
+        if (clientesRes?.success) {
           this.estadisticas.totalClientes = clientesRes.data.length;
         }
-      },
-    });
 
-    this.vehiculoService.getAll().subscribe({
-      next: vehiculosRes => {
-        if (vehiculosRes.success) {
+        if (vehiculosRes?.success) {
           this.estadisticas.totalVehiculos = vehiculosRes.data.length;
-          this.loading = false;
         }
-      },
-      error: () => (this.loading = false),
-    });
+
+        this.loading = false;
+      })
+      .catch(error => {
+        console.error('Error cargando estadísticas:', error);
+        this.loading = false;
+      });
   }
 
   getProgressBarClass(estado: string): string {
