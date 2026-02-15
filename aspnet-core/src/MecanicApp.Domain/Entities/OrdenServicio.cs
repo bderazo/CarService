@@ -24,13 +24,16 @@ namespace MecanicApp.Entities
         public decimal Descuento { get; set; }
         public decimal Impuesto { get; set; }
         public decimal Total { get; set; }
+        public int DuracionTotalEstimada { get; set; }
 
         // Relaciones
         public virtual ICollection<OrdenServicioDetalle> Detalles { get; set; }
+        public virtual ICollection<OrdenServicioUsuario> UsuariosAsignados { get; set; }
 
         public OrdenServicio()
         {
             Detalles = new HashSet<OrdenServicioDetalle>();
+            UsuariosAsignados = new HashSet<OrdenServicioUsuario>();
             FechaEntrada = DateTime.Now;
         }
 
@@ -40,24 +43,36 @@ namespace MecanicApp.Entities
             VehiculoId = vehiculoId;
             FechaEntrada = DateTime.Now;
             Detalles = new HashSet<OrdenServicioDetalle>();
+            UsuariosAsignados = new HashSet<OrdenServicioUsuario>();
         }
 
-        // Método para calcular totales
-        public void CalcularTotales()
+        // MÃ©todo para calcular totales y duraciÃ³n
+        public void CalcularTotalesYDuracion()
         {
             SubtotalServicios = 0;
             SubtotalProductos = 0;
+            DuracionTotalEstimada = 0; // âœ… IMPORTANTE: INICIALIZAR
 
             foreach (var detalle in Detalles)
             {
                 if (detalle.Tipo == "SERVICIO")
+                {
                     SubtotalServicios += detalle.Subtotal;
+
+                    // âœ… SUMAR DURACIÃ“N DEL SERVICIO * CANTIDAD
+                    if (detalle.ServicioId.HasValue && detalle.Servicio != null)
+                    {
+                        DuracionTotalEstimada += (detalle.Servicio.DuracionEstimada ?? 0) * detalle.Cantidad;
+                    }
+                }
                 else if (detalle.Tipo == "PRODUCTO")
+                {
                     SubtotalProductos += detalle.Subtotal;
+                }
             }
 
             var subtotal = SubtotalServicios + SubtotalProductos;
-            Impuesto = subtotal * 0.12m; // 12% IVA (ajustar según país)
+            Impuesto = subtotal * 0.12m;
             Total = subtotal + Impuesto - Descuento;
         }
     }

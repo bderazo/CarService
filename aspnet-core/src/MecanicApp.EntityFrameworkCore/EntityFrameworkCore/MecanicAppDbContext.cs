@@ -32,6 +32,7 @@ public class MecanicAppDbContext :
     public DbSet<Producto> Productos { get; set; }
     public DbSet<OrdenServicio> OrdenesServicio { get; set; }
     public DbSet<OrdenServicioDetalle> OrdenServicioDetalles { get; set; }
+    public DbSet<OrdenServicioUsuario> OrdenServicioUsuarios { get; set; }
 
     #region Entities from the modules
 
@@ -71,6 +72,24 @@ public class MecanicAppDbContext :
     {
         base.OnModelCreating(builder);
 
+        builder.Entity<OrdenServicioUsuario>(b =>
+        {
+            b.ToTable("OrdenServicioUsuarios");
+
+            b.Property(x => x.UserName).HasMaxLength(100).IsRequired();
+            b.Property(x => x.NombreCompleto).HasMaxLength(200);
+            b.Property(x => x.Rol).HasMaxLength(50).IsRequired();
+            b.Property(x => x.Estado).HasMaxLength(20).HasDefaultValue("ASIGNADO");
+            b.Property(x => x.Observaciones).HasMaxLength(1000);
+
+            b.HasOne(x => x.OrdenServicio)
+                .WithMany(x => x.UsuariosAsignados)
+                .HasForeignKey(x => x.OrdenServicioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasIndex(x => new { x.OrdenServicioId, x.UsuarioId })
+                .IsUnique();
+        });
 
         builder.ConfigurePermissionManagement();
         builder.ConfigureSettingManagement();

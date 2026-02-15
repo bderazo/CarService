@@ -4,6 +4,7 @@ using MecanicApp.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace MecanicApp.Migrations
 {
     [DbContext(typeof(MecanicAppDbContext))]
-    partial class MecanicAppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260212045135_Add_DuracionTotalEstimada_To_OrdenServicio")]
+    partial class Add_DuracionTotalEstimada_To_OrdenServicio
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

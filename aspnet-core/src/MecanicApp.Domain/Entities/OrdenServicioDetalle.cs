@@ -14,7 +14,7 @@ namespace MecanicApp.Entities
         public Guid? ProductoId { get; set; }
         public virtual Producto Producto { get; set; }
 
-        public string Tipo { get; set; } 
+        public string Tipo { get; set; }
         public string Descripcion { get; set; }
         public int Cantidad { get; set; } = 1;
         public decimal PrecioUnitario { get; set; }
