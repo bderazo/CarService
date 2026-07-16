@@ -1,266 +1,316 @@
-// src/app/services/proforma-pdf.service.ts
 import { Injectable } from '@angular/core';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { OrdenServicio } from '../services/orden-servicio.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ProformaPdfService {
+
+  private readonly PAGE_W = 210;
+  private readonly PAGE_H = 297;
+  private readonly MARGIN = 12;
+  private readonly BLUE = [26, 60, 94] as const;
+  private readonly GRAY = [100, 100, 100] as const;
+  private readonly LIGHT_GRAY = [220, 220, 220] as const;
+  private readonly WHITE = [255, 255, 255] as const;
 
   generarProforma(orden: OrdenServicio, cliente: any, vehiculo: any): void {
     const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    
-    // Configuración de márgenes
-    const margin = 15;
-    let y = margin;
+    const W = this.PAGE_W;
+    const M = this.MARGIN;
+    const usable = W - M * 2;
+    let y = M;
 
-    // ============ ENCABEZADO ============
-    // Logo y título
+    // ─── ENCABEZADO ───
+    doc.setFillColor(...this.BLUE);
+    doc.rect(0, 0, W, 28, 'F');
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.WHITE);
+    doc.text('SERVICIO AUTOMOTRIZ', W / 2, 12, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Taller Mecánico Especializado', W / 2, 18, { align: 'center' });
+    doc.text('RUC: 0999999999001 | Tel: (04) 2XXX-XXX | Email: info@mecanicapp.com', W / 2, 23, { align: 'center' });
+    y = 34;
+
+    // ─── TÍTULO PROFORMA ───
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('MECANICAPP', pageWidth / 2, y, { align: 'center' });
+    doc.setTextColor(...this.BLUE);
+    doc.text('PROFORMA', W / 2, y, { align: 'center' });
     y += 8;
 
-    doc.setFontSize(14);
+    // N° PRE
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    doc.text('Taller Mecánico Especializado', pageWidth / 2, y, { align: 'center' });
+    doc.setTextColor(...this.GRAY);
+    doc.text(`N° PRE-${orden.codigo || '______'}`, W - M, y, { align: 'right' });
     y += 6;
 
-    doc.setFontSize(10);
-    doc.text('RUC: 0999999999001 | Tel: (04) 2XXX-XXX | Email: info@mecanicapp.com', pageWidth / 2, y, { align: 'center' });
+    // ─── LÍNEA SEPARADORA ───
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.4);
+    doc.line(M, y, W - M, y);
     y += 6;
 
-    doc.setDrawColor(44, 62, 80);
-    doc.setLineWidth(0.5);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 8;
+    // ─── DATOS DEL CLIENTE Y COTIZACIÓN ───
+    y = this.drawSectionTitle(doc, 'DATOS DEL CLIENTE Y COTIZACIÓN', y, M, W);
+    y += 2;
 
-    // Título PROFORMA
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('PROFORMA', pageWidth / 2, y, { align: 'center' });
-    y += 10;
+    const clientBoxY = y;
+    const clientBoxH = 40;
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(245, 248, 252);
+    doc.roundedRect(M, y, usable, clientBoxH, 2, 2, 'FD');
 
-    // Código de la proforma
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Código: ${orden.codigo}`, pageWidth - margin, y, { align: 'right' });
-    y += 8;
+    const cL = M + 4;
+    const cMid = M + usable / 2;
+    const rL = cMid + 4;
+    let cY = y + 6;
 
-    // ============ DATOS DEL CLIENTE ============
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('DATOS DEL CLIENTE', margin, y);
-    y += 6;
-
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(50, 50, 50);
-    
-    // Tabla de datos del cliente
-    const clientData = [
-      ['Señor(es):', cliente.nombre || 'No especificado'],
-      ['RUC/C.I:', cliente.cedula || 'No especificado'],
-      ['Teléfono:', cliente.telefono || 'No especificado'],
-      ['E-mail:', cliente.email || 'No especificado'],
-      ['Fecha Emisión:', new Date(orden.fechaEntrada).toLocaleDateString('es-ES')],
-      ['Validez Oferta:', orden.validezOferta || 'No especificado'],
-      ['Forma de Pago:', orden.formaPago || 'No especificado']
-    ];
 
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: clientData,
-      theme: 'plain',
-      styles: {
-        fontSize: 10,
-        cellPadding: 2,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1
-      },
-      columnStyles: {
-        0: { cellWidth: 45, fontStyle: 'bold', textColor: [80, 80, 80] },
-        1: { cellWidth: 120 }
-      },
-      margin: { left: margin }
-    });
+    const drawField = (lx: string, lv: string, rx: string, rv: string, curY: number) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...this.GRAY);
+      doc.text(lx, cL, curY);
+      doc.text(rx, rL, curY);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(30, 30, 30);
+      doc.text(lv || 'No especificado', cL + 28, curY);
+      doc.text(rv || 'No especificado', rL + 28, curY);
+    };
 
-    y = (doc as any).lastAutoTable.finalY + 8;
-
-    // ============ DATOS DEL VEHÍCULO ============
-    doc.setFontSize(14);
+    drawField('Señor(es):', cliente.nombre, 'Fecha Emisión:', this.formatDate(orden.fechaEntrada), cY);
+    cY += 8;
+    drawField('RUC / C.I.:', cliente.cedula, 'Validez Oferta:', orden.validezOferta || '_______ Días', cY);
+    cY += 8;
+    drawField('Teléfono:', cliente.telefono, 'Forma de Pago:', orden.formaPago || 'Contado / Transferencia', cY);
+    cY += 8;
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('DATOS DEL VEHÍCULO', margin, y);
-    y += 6;
+    doc.setTextColor(...this.GRAY);
+    doc.text('E-mail:', cL, cY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(cliente.email || 'No especificado', cL + 28, cY);
 
-    const vehicleData = [
-      ['Marca:', vehiculo.marca || 'No especificado'],
-      ['Placa:', vehiculo.placa || 'No especificado'],
-      ['Modelo:', vehiculo.modelo || 'No especificado'],
-      ['Año:', vehiculo.anio?.toString() || 'No especificado']
-    ];
+    y = clientBoxY + clientBoxH + 6;
 
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: vehicleData,
-      theme: 'plain',
-      styles: {
-        fontSize: 10,
-        cellPadding: 2,
-        lineColor: [200, 200, 200],
-        lineWidth: 0.1
-      },
-      columnStyles: {
-        0: { cellWidth: 45, fontStyle: 'bold', textColor: [80, 80, 80] },
-        1: { cellWidth: 120 }
-      },
-      margin: { left: margin }
-    });
+    // ─── DETALLES DEL VEHÍCULO ───
+    y = this.drawSectionTitle(doc, 'DETALLES DEL VEHÍCULO', y, M, W);
+    y += 2;
 
-    y = (doc as any).lastAutoTable.finalY + 8;
+    const vehBoxH = 18;
+    doc.setDrawColor(...this.BLUE);
+    doc.setFillColor(245, 248, 252);
+    doc.roundedRect(M, y, usable, vehBoxH, 2, 2, 'FD');
 
-    // ============ TABLA DE DETALLES ============
-    doc.setFontSize(14);
+    let vY = y + 7;
+    doc.setFontSize(9);
+    const vCol1 = M + 4;
+    const vCol2 = cMid;
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('DETALLES DE TRABAJOS Y REPUESTOS', margin, y);
-    y += 6;
+    doc.setTextColor(...this.GRAY);
+    doc.text('Marca:', vCol1, vY);
+    doc.text('Modelo:', vCol1 + 38, vY);
+    doc.text('Placa:', vCol2, vY);
+    doc.text('Año / Km:', vCol2 + 38, vY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(vehiculo.marca || '-', vCol1 + 14, vY);
+    doc.text(vehiculo.modelo || '-', vCol1 + 54, vY);
+    doc.text(vehiculo.placa || '-', vCol2 + 16, vY);
+    const km = vehiculo.kilometraje ? `${vehiculo.kilometraje} km` : '-';
+    doc.text(`${vehiculo.anio || '-'} / ${km}`, vCol2 + 30, vY);
 
-    // Preparar datos para la tabla
-    const tableRows = orden.detalles?.map(detalle => [
-      detalle.cantidad || 1,
-      detalle.descripcion || 'No especificado',
-      `$${detalle.precioUnitario?.toFixed(2) || '0.00'}`,
-      `$${detalle.subtotal?.toFixed(2) || '0.00'}`
-    ]) || [];
+    y = y + vehBoxH + 6;
+
+    // ─── DETALLE DE REPUESTOS Y MANO DE OBRA ───
+    y = this.drawSectionTitle(doc, 'DETALLE DE REPUESTOS Y MANO DE OBRA', y, M, W);
+    y += 2;
+
+    const detalles = orden.detalles || [];
+    const tableBody = detalles.map(d => [
+      String(d.cantidad || 1),
+      d.descripcion || '',
+      `$${(d.precioUnitario || 0).toFixed(2)}`,
+      `$${(d.subtotal || 0).toFixed(2)}`
+    ]);
+
+    if (tableBody.length === 0) {
+      tableBody.push(['', '', '', '']);
+    }
 
     autoTable(doc, {
       startY: y,
-      head: [['Cant.', 'Descripción de trabajos/repuestos', 'V. Unitario', 'V. Total']],
-      body: tableRows,
+      head: [['CANT.', 'DESCRIPCIÓN DE TRABAJOS / REPUESTOS', 'V. UNITARIO', 'V. TOTAL']],
+      body: tableBody,
       theme: 'grid',
       styles: {
-        fontSize: 9,
-        cellPadding: 3,
-        textColor: [50, 50, 50]
+        fontSize: 8,
+        cellPadding: 2.5,
+        textColor: [40, 40, 40],
+        lineColor: [...this.BLUE],
+        lineWidth: 0.2,
       },
       headStyles: {
-        fillColor: [44, 62, 80],
-        textColor: [255, 255, 255],
+        fillColor: [...this.BLUE],
+        textColor: [...this.WHITE],
         fontStyle: 'bold',
-        fontSize: 10
+        fontSize: 8,
+        halign: 'center',
       },
       columnStyles: {
-        0: { cellWidth: 20, halign: 'center' },
-        1: { cellWidth: 90 },
-        2: { cellWidth: 40, halign: 'right' },
-        3: { cellWidth: 40, halign: 'right' }
+        0: { cellWidth: 16, halign: 'center' },
+        1: { cellWidth: 100 },
+        2: { cellWidth: 30, halign: 'right' },
+        3: { cellWidth: 30, halign: 'right' },
       },
-      margin: { left: margin, right: margin }
+      margin: { left: M, right: M },
     });
 
-    y = (doc as any).lastAutoTable.finalY + 8;
+    y = (doc as any).lastAutoTable.finalY + 5;
 
-    // ============ RESUMEN DE TOTALES ============
-    const subtotal = orden.subtotalServicios + orden.subtotalProductos;
+    // ─── NOTAS IMPORTANTES ───
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.BLUE);
+    doc.text('Notas Importantes:', M, y);
+    y += 4;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(80, 80, 80);
+    doc.setFontSize(7);
+    doc.text('- Los valores presupuestados están sujetos a variación si al desarmar se encuentran', M + 2, y);
+    y += 3.5;
+    doc.text('  daños ocultos adicionales, lo cual será notificado previamente al cliente.', M + 2, y);
+    y += 3.5;
+    doc.text('- Los repuestos cotizados están sujetos a disponibilidad de stock en el mercado local/', M + 2, y);
+    y += 3.5;
+    doc.text('  importador.', M + 2, y);
+    y += 6;
+
+    // ─── TOTALES ───
+    const subtotalMO = detalles
+      .filter(d => d.tipo === 'SERVICIO')
+      .reduce((s, d) => s + (d.subtotal || 0), 0);
+    const subtotalRep = detalles
+      .filter(d => d.tipo === 'PRODUCTO')
+      .reduce((s, d) => s + (d.subtotal || 0), 0);
     const iva = orden.impuesto || 0;
     const total = orden.total || 0;
 
-    const summaryData = [
-      ['SUBTOTAL:', `$${subtotal.toFixed(2)}`],
-      ['IVA (12%):', `$${iva.toFixed(2)}`],
-      ['TOTAL:', `$${total.toFixed(2)}`]
-    ];
+    const totalsY = y;
+    const totW = 80;
+    const totX = W - M - totW;
 
-    autoTable(doc, {
-      startY: y,
-      head: [],
-      body: summaryData,
-      theme: 'plain',
-      styles: {
-        fontSize: 11,
-        cellPadding: 3,
-        textColor: [50, 50, 50]
-      },
-      columnStyles: {
-        0: { cellWidth: 130, fontStyle: 'bold', halign: 'right' },
-        1: { cellWidth: 40, halign: 'right', fontStyle: 'bold' }
-      },
-      margin: { left: margin, right: margin }
-    });
-
-    y = (doc as any).lastAutoTable.finalY + 8;
-
-    // ============ TÉRMINOS Y CONDICIONES ============
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('NOTAS IMPORTANTES', margin, y);
-    y += 5;
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(245, 248, 252);
+    doc.roundedRect(totX, totalsY, totW, 28, 2, 2, 'FD');
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(80, 80, 80);
-    
-    const terms = [
-      '• Esta proforma tiene una validez de ' + (orden.validezOferta || '3 días') + '.',
-      '• Los precios incluyen IVA.',
-      '• Los trabajos serán realizados en el taller del cliente.',
-      '• El cliente debe revisar y aprobar la proforma antes de iniciar los trabajos.'
-    ];
+    doc.setTextColor(50, 50, 50);
 
-    terms.forEach(term => {
-      doc.text(term, margin + 5, y);
-      y += 5;
-    });
+    let tY = totalsY + 6;
+    const drawTot = (label: string, val: string) => {
+      doc.setFont('helvetica', 'normal');
+      doc.text(label, totX + 4, tY);
+      doc.setFont('helvetica', 'bold');
+      doc.text(val, totX + totW - 4, tY, { align: 'right' });
+      tY += 7;
+    };
 
-    y += 3;
+    drawTot(`Subtotal M.O.:`, `$${subtotalMO.toFixed(2)}`);
+    drawTot(`Subtotal Repuestos:`, `$${subtotalRep.toFixed(2)}`);
+    drawTot(`IVA (12%):`, `$${iva.toFixed(2)}`);
 
-    // ============ FIRMAS ============
-    doc.setFontSize(10);
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.2);
+    doc.line(totX + 4, tY - 1, totX + totW - 4, tY - 1);
+
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(44, 62, 80);
-    doc.text('FIRMAS DE RESPONSABILIDAD', margin, y);
-    y += 10;
+    doc.setTextColor(...this.BLUE);
+    doc.text('TOTAL:', totX + 4, tY + 4);
+    doc.text(`$${total.toFixed(2)}`, totX + totW - 4, tY + 4, { align: 'right' });
 
-    // Líneas para firmas
-    const firmaY = y;
-    const firmaWidth = 70;
-    const firmaHeight = 20;
-    const firmaSpacing = 30;
+    y = totalsY + 34;
 
-    // Firma del taller
-    doc.setFontSize(9);
+    // ─── TÉRMINOS Y CONDICIONES ───
+    y = this.drawSectionTitle(doc, 'TÉRMINOS Y CONDICIONES DE LA COTIZACIÓN', y, M, W);
+    y += 2;
+
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
-    doc.text('_________________________', margin, firmaY);
-    doc.text('Firma del Taller', margin, firmaY + 5);
-    doc.text('(MECANICAPP)', margin, firmaY + 10);
+    doc.setTextColor(70, 70, 70);
+    const termsText = `Esta proforma constituye una estimación económica basada exclusivamente en la revisión visual previa o los síntomas manifestados del vehículo. Toda orden de trabajo derivada de esta proforma requiere la aceptación explícita de los términos de pago acordados. Las partes y piezas sustituidas cuentan con la garantía directa otorgada por el fabricante o proveedor según el rubro correspondiente.`;
+    const splitTerms = doc.splitTextToSize(termsText, usable);
+    doc.text(splitTerms, M, y);
+    y += splitTerms.length * 3.5 + 8;
 
-    // Firma del cliente
-    doc.text('_________________________', margin + firmaWidth + firmaSpacing, firmaY);
-    doc.text('Firma del Cliente', margin + firmaWidth + firmaSpacing, firmaY + 5);
-    doc.text('(Responsable)', margin + firmaWidth + firmaSpacing, firmaY + 10);
+    // ─── FIRMAS ───
+    const firmW = 70;
+    const firmGap = 20;
+    const firmY = y;
 
-    // ============ PIE DE PÁGINA ============
-    const footerY = pageHeight - 15;
+    doc.setDrawColor(...this.GRAY);
+    doc.setLineWidth(0.2);
+
+    // Firma izquierda
+    doc.line(M, firmY, M + firmW, firmY);
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(150, 150, 150);
-    doc.text('Documento generado por MecanicApp - Sistema de Gestión de Taller Mecánico', pageWidth / 2, footerY, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('PREPARADO POR:', M, firmY + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(50, 50, 50);
+    doc.text('M-O Servicio Automotriz', M, firmY + 8);
 
-    // ============ GUARDAR PDF ============
+    // Firma derecha
+    const rFirmX = M + firmW + firmGap + 30;
+    doc.line(rFirmX, firmY, rFirmX + firmW, firmY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('ACEPTADO CLIENTE:', rFirmX, firmY + 4);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(50, 50, 50);
+    doc.text('Firma de Conformidad Presupuestaria', rFirmX, firmY + 8);
+
+    // ─── PIE DE PÁGINA ───
+    doc.setFillColor(...this.BLUE);
+    doc.rect(0, this.PAGE_H - 10, W, 10, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...this.WHITE);
+    doc.text('Documento generado por MecanicApp - Sistema de Gestión de Taller Mecánico', W / 2, this.PAGE_H - 4, { align: 'center' });
+
     doc.save(`Proforma-${orden.codigo}.pdf`);
+  }
+
+  private drawSectionTitle(doc: jsPDF, title: string, y: number, M: number, W: number): number {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.BLUE);
+    doc.text(title, M, y);
+    y += 2;
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.2);
+    doc.line(M, y, M + doc.getTextWidth(title) + 2, y);
+    return y + 4;
+  }
+
+  private formatDate(date: any): string {
+    if (!date) return '____ / ____ / 20___';
+    return new Date(date).toLocaleDateString('es-ES');
+  }
+
+  private formatTime(date: any): string {
+    if (!date) return '_______';
+    return new Date(date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   }
 }
