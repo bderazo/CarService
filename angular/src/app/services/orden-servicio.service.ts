@@ -22,25 +22,36 @@ export interface OrdenServicio {
   codigo: string;
   vehiculoId: string;
   placaVehiculo: string;
-  clienteId?: string;
   clienteNombre: string;
-  fechaEntrada: string;
-  fechaSalida?: string;
+  clienteId?: string; // ✅ Agregar si no existe
+  fechaEntrada: Date;
+  fechaSalida?: Date;
   estado: string;
-  observaciones: string;
+  observaciones?: string;
   subtotalServicios: number;
   subtotalProductos: number;
   descuento: number;
   impuesto: number;
   total: number;
   duracionTotalEstimada: number;
+
+  // ✅ NUEVOS CAMPOS PARA PROFORMA
+  formaPago?: string;
+  validezOferta?: string;
+
+  // ✅ NUEVOS CAMPOS PARA ORDEN DE TRABAJO
+  fechaEntrega?: Date;
+  especificacionAveria?: string;
+  estadoCarroceria?: string;
+
   detalles: OrdenServicioDetalle[];
-  usuariosAsignados?: UsuarioAsignado[];
-  creationTime: string;
+  usuariosAsignados: OrdenServicioUsuario[];
+  creationTime?: Date;
 }
 
 export interface OrdenServicioDetalle {
   id: string;
+  ordenServicioId: string;
   servicioId?: string;
   productoId?: string;
   tipo: string;
@@ -48,9 +59,20 @@ export interface OrdenServicioDetalle {
   cantidad: number;
   precioUnitario: number;
   subtotal: number;
-  observaciones: string;
-  duracionEstimada?: number;
-  usuariosAsignadosIds?: string[];
+  observaciones?: string;
+}
+
+export interface OrdenServicioUsuario {
+  id: string;
+  ordenServicioId: string;
+  usuarioId: string;
+  userName?: string;
+  nombreCompleto?: string;
+  rol: string;
+  estado: string;
+  fechaAsignacion: Date;
+  fechaCompletado?: Date;
+  observaciones?: string;
 }
 
 export interface CreateOrdenServicioDto {
@@ -113,7 +135,7 @@ export interface ActualizarAsignacionDto {
 export class OrdenServicioService {
   private apiUrl = API_CONFIG.ORDENES_SERVICIO;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // GET todas las órdenes
   getAll(): Observable<{ success: boolean; data: OrdenServicio[] }> {

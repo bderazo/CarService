@@ -11,6 +11,7 @@ namespace MecanicApp.Entities
         public int? Anio { get; set; }
         public string Color { get; set; }
         public decimal? Kilometraje { get; set; }
+        public string? Cilindrada { get; set; }
 
         public Guid ClienteId { get; set; }
 

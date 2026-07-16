@@ -390,7 +390,7 @@ export class OrdenesListComponent implements OnInit {
     private ordenServicioService: OrdenServicioService,
     private usuariosRolesService: UsuariosRolesService,
     public authService: AuthService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarUsuarioActual();
@@ -518,14 +518,20 @@ export class OrdenesListComponent implements OnInit {
 
             if (userId) {
               // Mostrar todas las órdenes con sus asignaciones para debug
+              // En el método donde se usa usuarioNombre
               this.ordenes.forEach(orden => {
-                console.log(`🔍 [DEBUG] Orden ${orden.codigo}:`, {
-                  id: orden.id,
-                  usuariosAsignados: orden.usuariosAsignados?.map(u => ({
+                orden.usuariosAsignados?.forEach(u => {
+                  // ✅ CORRECCIÓN
+                  const nombreUsuario = u.nombreCompleto || u.userName || 'Sin nombre';
+                  console.log(`Usuario: ${nombreUsuario} - Rol: ${u.rol}`);
+
+                  // Si estás construyendo un objeto
+                  const usuarioInfo = {
                     id: u.usuarioId,
-                    nombre: u.usuarioNombre,
+                    nombre: u.nombreCompleto || u.userName || 'Sin nombre', // ← Aquí la corrección
                     rol: u.rol,
-                  })),
+                    estado: u.estado
+                  };
                 });
               });
 

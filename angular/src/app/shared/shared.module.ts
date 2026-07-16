@@ -3,6 +3,8 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgModule } from '@angular/core';
 import { ThemeSharedModule } from '@abp/ng.theme.shared';
 import { NgxValidateCoreModule } from '@ngx-validate/core';
+import { ProformaPdfService } from '../services/proforma-pdf.service';
+import { OrdenTrabajoPdfService } from '../services/orden-trabajo-pdf.service';
 
 @NgModule({
   declarations: [],
@@ -18,6 +20,9 @@ import { NgxValidateCoreModule } from '@ngx-validate/core';
     NgbDropdownModule,
     NgxValidateCoreModule
   ],
-  providers: []
+  providers: [
+    ProformaPdfService,
+    OrdenTrabajoPdfService,
+  ]
 })
-export class SharedModule {}
+  export class SharedModule { }

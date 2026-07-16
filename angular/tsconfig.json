@@ -1,7 +1,7 @@
-/* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "rootDir": "./src",
     "baseUrl": "./",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
@@ -13,6 +13,7 @@
     "module": "esnext",
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "ignoreDeprecations": "5.0", // ✅ Cambiar de "6.0" a "5.0"
     "lib": [
       "es2020",
       "dom"

@@ -192,7 +192,7 @@ export class DashboardComponent implements OnInit {
     private clienteService: ClienteService,
     private vehiculoService: VehiculoService,
     private authDebugService: AuthDebugService,
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     console.log('🏠 [DASHBOARD] Componente inicializado');
@@ -243,7 +243,7 @@ export class DashboardComponent implements OnInit {
             .filter(
               o =>
                 (o.estado === 'COMPLETADA' || o.estado === 'FACTURADA') &&
-                o.fechaSalida?.split('T')[0] === hoyStr,
+                new Date(o.fechaSalida).toISOString().split('T')[0] === hoyStr,
             )
             .reduce((sum, o) => sum + o.total, 0);
 

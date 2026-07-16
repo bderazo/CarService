@@ -26,6 +26,12 @@ namespace MecanicApp.Entities
         public decimal Total { get; set; }
         public int DuracionTotalEstimada { get; set; }
 
+        public string? FormaPago { get; set; } 
+        public string? ValidezOferta { get; set; } 
+        public DateTime? FechaEntrega { get; set; }
+        public string? EspecificacionAveria { get; set; }
+        public string? EstadoCarroceria { get; set; }
+
         // Relaciones
         public virtual ICollection<OrdenServicioDetalle> Detalles { get; set; }
         public virtual ICollection<OrdenServicioUsuario> UsuariosAsignados { get; set; }
@@ -51,7 +57,7 @@ namespace MecanicApp.Entities
         {
             SubtotalServicios = 0;
             SubtotalProductos = 0;
-            DuracionTotalEstimada = 0; // ✅ IMPORTANTE: INICIALIZAR
+            DuracionTotalEstimada = 0;
 
             foreach (var detalle in Detalles)
             {
@@ -59,7 +65,6 @@ namespace MecanicApp.Entities
                 {
                     SubtotalServicios += detalle.Subtotal;
 
-                    // ✅ SUMAR DURACIÓN DEL SERVICIO * CANTIDAD
                     if (detalle.ServicioId.HasValue && detalle.Servicio != null)
                     {
                         DuracionTotalEstimada += (detalle.Servicio.DuracionEstimada ?? 0) * detalle.Cantidad;

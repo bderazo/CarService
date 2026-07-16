@@ -6,6 +6,10 @@ import { OrdenServicioService, OrdenServicio } from '../../services/orden-servic
 import { UsuariosRolesService } from '../../services/usuarios-roles.service'; // Nuevo servicio
 import { ServicioService } from '../../services/servicio.service';
 import { AuthService } from '../../auth/services/auth.service';
+import { ClienteService } from '../../services/cliente.service';
+import { VehiculoService } from '../../services/vehiculo.service';
+import { ProformaPdfService } from '../../services/proforma-pdf.service'
+import { OrdenTrabajoPdfService } from '../../services/orden-trabajo-pdf.service';
 
 @Component({
   selector: 'app-orden-detail',
@@ -40,6 +44,41 @@ import { AuthService } from '../../auth/services/auth.service';
       <div *ngIf="error" class="alert alert-danger">
         {{ error }}
         <button class="btn btn-sm btn-outline-danger ms-3" routerLink="/ordenes">Volver</button>
+      </div>
+
+      <!-- En el componente de detalle/edición de orden -->
+      <div class="card mt-3">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-file-pdf me-2"></i> Documentos
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <button 
+                class="btn btn-primary w-100" 
+                (click)="generarProforma()"
+                [disabled]="!orden || !cliente || !vehiculo">
+                <i class="fas fa-file-pdf me-2"></i> Generar Proforma
+              </button>
+              <small class="text-muted d-block mt-1">
+                Forma de pago: {{ orden.formaPago || 'No seleccionada' }}
+              </small>
+            </div>
+            <div class="col-md-6">
+              <button 
+                class="btn btn-success w-100" 
+                (click)="generarOrdenTrabajo()"
+                [disabled]="!orden || !cliente || !vehiculo">
+                <i class="fas fa-file-pdf me-2"></i> Generar Orden de Trabajo
+              </button>
+              <small class="text-muted d-block mt-1">
+                Avería: {{ orden.especificacionAveria ? 'Especificada' : 'No especificada' }}
+              </small>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div *ngIf="!loading && orden" class="row">
@@ -764,6 +803,9 @@ export class OrdenDetailComponent implements OnInit {
 
   currentUser: any = null;
 
+  cliente: any = null;
+  vehiculo: any = null;
+
   nuevoDetalle = {
     tipo: '',
     descripcion: '',
@@ -829,10 +871,14 @@ export class OrdenDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private ordenServicioService: OrdenServicioService,
-    private usuariosRolesService: UsuariosRolesService,
     private servicioService: ServicioService,
-    public authService: AuthService,
-  ) {}
+    private clienteService: ClienteService,
+    private vehiculoService: VehiculoService,
+    private proformaPdfService: ProformaPdfService,
+    private ordenTrabajoPdfService: OrdenTrabajoPdfService, // ✅ AGREGAR
+    private authService: AuthService,
+    private usuariosRolesService: UsuariosRolesService,
+  ) { }
 
   ngOnInit(): void {
     this.cargarCatalogoServicios();
@@ -1205,7 +1251,7 @@ export class OrdenDetailComponent implements OnInit {
     this.usuariosRolesService.getUsuariosAsignables().subscribe({
       next: response => {
         if (response.success) {
-          this.usuariosDisponibles = response.items;
+          this.usuariosDisponibles = response.items || [];
           // Filtrar usuarios que ya están asignados
           this.usuariosDisponibles = this.usuariosDisponibles.filter(
             usuario => !this.usuariosAsignados.some(asignado => asignado.id === usuario.id),
@@ -1394,5 +1440,40 @@ export class OrdenDetailComponent implements OnInit {
           },
         });
     }
+  }
+
+  generarProforma(): void {
+    if (!this.orden || !this.cliente || !this.vehiculo) {
+      alert('Faltan datos para generar la proforma');
+      return;
+    }
+
+    // Verificar que los datos necesarios existan
+    if (!this.orden.formaPago) {
+      alert('Por favor, seleccione una forma de pago antes de generar la proforma');
+      return;
+    }
+
+    if (!this.orden.validezOferta) {
+      alert('Por favor, seleccione la validez de la oferta antes de generar la proforma');
+      return;
+    }
+
+    this.proformaPdfService.generarProforma(this.orden, this.cliente, this.vehiculo);
+  }
+
+  generarOrdenTrabajo(): void {
+    if (!this.orden || !this.cliente || !this.vehiculo) {
+      alert('Faltan datos para generar la orden de trabajo');
+      return;
+    }
+
+    // Verificar que los datos necesarios existan
+    if (!this.orden.especificacionAveria) {
+      alert('Por favor, especifique la avería antes de generar la orden de trabajo');
+      return;
+    }
+
+    this.ordenTrabajoPdfService.generarOrdenTrabajo(this.orden, this.cliente, this.vehiculo);
   }
 }
