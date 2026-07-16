@@ -267,4 +267,15 @@ export class OrdenServicioService {
       `${this.apiUrl}/usuario/${usuarioId}`,
     );
   }
+
+  // PUT actualizar documentos (formaPago, validezOferta)
+  updateDocumentos(
+    id: string,
+    documentos: { formaPago?: string; validezOferta?: string; especificacionAveria?: string; estadoCarroceria?: string },
+  ): Observable<{ success: boolean; message: string; data: OrdenServicio }> {
+    return this.http.put<{ success: boolean; message: string; data: OrdenServicio }>(
+      `${this.apiUrl}/${id}/documentos`,
+      documentos,
+    );
+  }
 }

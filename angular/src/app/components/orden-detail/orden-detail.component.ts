@@ -54,6 +54,47 @@ import { OrdenTrabajoPdfService } from '../../services/orden-trabajo-pdf.service
           </h5>
         </div>
         <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Forma de Pago</label>
+              <select class="form-select" [(ngModel)]="orden.formaPago" (ngModelChange)="guardarDocumentos()">
+                <option value="">Seleccionar...</option>
+                <option value="Efectivo">Efectivo</option>
+                <option value="Transferencia">Transferencia</option>
+                <option value="Tarjeta de Crédito">Tarjeta de Crédito</option>
+                <option value="Tarjeta de Débito">Tarjeta de Débito</option>
+                <option value="Cheque">Cheque</option>
+                <option value="Crédito">Crédito</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Validez de la Oferta</label>
+              <select class="form-select" [(ngModel)]="orden.validezOferta" (ngModelChange)="guardarDocumentos()">
+                <option value="">Seleccionar...</option>
+                <option value="3 días">3 días</option>
+                <option value="5 días">5 días</option>
+                <option value="7 días">7 días</option>
+                <option value="10 días">10 días</option>
+                <option value="15 días">15 días</option>
+                <option value="30 días">30 días</option>
+              </select>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Especificación de Avería</label>
+              <textarea class="form-control" rows="3" placeholder="Describa la avería del vehículo..." [(ngModel)]="orden.especificacionAveria" (ngModelChange)="guardarDocumentos()"></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Estado de Carrocería</label>
+              <select class="form-select" [(ngModel)]="orden.estadoCarroceria" (ngModelChange)="guardarDocumentos()">
+                <option value="">Seleccionar...</option>
+                <option value="Bueno">Bueno</option>
+                <option value="Regular">Regular</option>
+                <option value="Malo">Malo</option>
+              </select>
+            </div>
+          </div>
           <div class="row">
             <div class="col-md-6">
               <button 
@@ -62,9 +103,6 @@ import { OrdenTrabajoPdfService } from '../../services/orden-trabajo-pdf.service
                 [disabled]="!orden || !cliente || !vehiculo">
                 <i class="fas fa-file-pdf me-2"></i> Generar Proforma
               </button>
-              <small class="text-muted d-block mt-1">
-                Forma de pago: {{ orden.formaPago || 'No seleccionada' }}
-              </small>
             </div>
             <div class="col-md-6">
               <button 
@@ -73,9 +111,6 @@ import { OrdenTrabajoPdfService } from '../../services/orden-trabajo-pdf.service
                 [disabled]="!orden || !cliente || !vehiculo">
                 <i class="fas fa-file-pdf me-2"></i> Generar Orden de Trabajo
               </button>
-              <small class="text-muted d-block mt-1">
-                Avería: {{ orden.especificacionAveria ? 'Especificada' : 'No especificada' }}
-              </small>
             </div>
           </div>
         </div>
@@ -1330,9 +1365,30 @@ export class OrdenDetailComponent implements OnInit {
         if (response.success) {
           this.orden = response.data;
 
-          // ✅ Cargar servicios para obtener duraciones
           this.cargarServiciosParaDuracion();
           this.cargarUsuariosAsignados(id);
+
+          if (this.orden.vehiculoId) {
+            this.vehiculoService.getById(this.orden.vehiculoId).subscribe({
+              next: vResp => {
+                if (vResp.success) {
+                  this.vehiculo = vResp.data;
+                }
+              },
+              error: () => {}
+            });
+          }
+
+          if (this.orden.clienteId) {
+            this.clienteService.getById(this.orden.clienteId).subscribe({
+              next: cResp => {
+                if (cResp.success) {
+                  this.cliente = cResp.data;
+                }
+              },
+              error: () => {}
+            });
+          }
         } else {
           this.error = 'Error al cargar la orden';
         }
@@ -1475,5 +1531,25 @@ export class OrdenDetailComponent implements OnInit {
     }
 
     this.ordenTrabajoPdfService.generarOrdenTrabajo(this.orden, this.cliente, this.vehiculo);
+  }
+
+  guardarDocumentos(): void {
+    if (!this.orden) return;
+
+    this.ordenServicioService.updateDocumentos(this.orden.id, {
+      formaPago: this.orden.formaPago || '',
+      validezOferta: this.orden.validezOferta || '',
+      especificacionAveria: this.orden.especificacionAveria || '',
+      estadoCarroceria: this.orden.estadoCarroceria || '',
+    }).subscribe({
+      next: response => {
+        if (response.success) {
+          this.orden = response.data;
+        }
+      },
+      error: err => {
+        console.error('Error guardando documentos:', err);
+      },
+    });
   }
 }

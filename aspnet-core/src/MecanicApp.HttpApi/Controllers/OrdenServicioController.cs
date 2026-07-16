@@ -225,10 +225,16 @@ namespace MecanicApp.Controllers
                 var orden = await _ordenServicioRepository.GetAsync(id);
                 var detalles = await _detalleRepository.GetListAsync(d => d.OrdenServicioId == id);
                 var vehiculo = await _vehiculoRepository.GetAsync(orden.VehiculoId);
+
+                Cliente cliente = null;
+                if (vehiculo != null && vehiculo.ClienteId != Guid.Empty)
+                {
+                    cliente = await _clienteRepository.GetAsync(vehiculo.ClienteId);
+                }
+
                 var usuariosAsignados = await _ordenServicioUsuarioRepository
                     .GetListAsync(u => u.OrdenServicioId == id);
 
-                // Obtener información de usuarios
                 var usuariosDto = new List<OrdenServicioUsuarioDto>();
                 foreach (var usuarioAsignado in usuariosAsignados)
                 {
@@ -258,7 +264,7 @@ namespace MecanicApp.Controllers
                         VehiculoId = orden.VehiculoId,
                         PlacaVehiculo = vehiculo?.Placa ?? string.Empty,
                         ClienteId = vehiculo?.ClienteId,
-                        ClienteNombre = "", // Deberías cargar el cliente aquí también
+                        ClienteNombre = cliente?.Nombre ?? "",
                         FechaEntrada = orden.FechaEntrada,
                         FechaSalida = orden.FechaSalida,
                         Estado = orden.Estado,
@@ -268,10 +274,12 @@ namespace MecanicApp.Controllers
                         Descuento = orden.Descuento,
                         Impuesto = orden.Impuesto,
                         Total = orden.Total,
-
-                        // ✅ ¡AGREGAR ESTA LÍNEA!
                         DuracionTotalEstimada = orden.DuracionTotalEstimada,
-
+                        FormaPago = orden.FormaPago,
+                        ValidezOferta = orden.ValidezOferta,
+                        FechaEntrega = orden.FechaEntrega,
+                        EspecificacionAveria = orden.EspecificacionAveria,
+                        EstadoCarroceria = orden.EstadoCarroceria,
                         Detalles = detalles.Select(d => new OrdenServicioDetalleDto
                         {
                             Id = d.Id,
@@ -589,6 +597,40 @@ namespace MecanicApp.Controllers
                 {
                     success = true,
                     message = "Orden actualizada exitosamente",
+                    data = await GetOrdenDto(orden.Id)
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}/documentos")]
+        public async Task<ActionResult<OrdenServicioDto>> UpdateDocumentos(Guid id, [FromBody] UpdateDocumentosDto input)
+        {
+            try
+            {
+                var orden = await _ordenServicioRepository.GetAsync(id);
+
+                if (input.FormaPago != null)
+                    orden.FormaPago = input.FormaPago;
+
+                if (input.ValidezOferta != null)
+                    orden.ValidezOferta = input.ValidezOferta;
+
+                if (input.EspecificacionAveria != null)
+                    orden.EspecificacionAveria = input.EspecificacionAveria;
+
+                if (input.EstadoCarroceria != null)
+                    orden.EstadoCarroceria = input.EstadoCarroceria;
+
+                orden = await _ordenServicioRepository.UpdateAsync(orden, autoSave: true);
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Documentos actualizados exitosamente",
                     data = await GetOrdenDto(orden.Id)
                 });
             }
@@ -970,10 +1012,16 @@ namespace MecanicApp.Controllers
             var orden = await _ordenServicioRepository.GetAsync(id);
             var detalles = await _detalleRepository.GetListAsync(d => d.OrdenServicioId == id);
             var vehiculo = await _vehiculoRepository.GetAsync(orden.VehiculoId);
+
+            Cliente cliente = null;
+            if (vehiculo != null && vehiculo.ClienteId != Guid.Empty)
+            {
+                cliente = await _clienteRepository.GetAsync(vehiculo.ClienteId);
+            }
+
             var usuariosAsignados = await _ordenServicioUsuarioRepository
                 .GetListAsync(u => u.OrdenServicioId == id);
 
-            // ✅ CARGAR SERVICIOS PARA LOS DETALLES
             var servicioIds = detalles
                 .Where(d => d.ServicioId.HasValue)
                 .Select(d => d.ServicioId.Value)
@@ -984,7 +1032,6 @@ namespace MecanicApp.Controllers
                 ? await _servicioRepository.GetListAsync(s => servicioIds.Contains(s.Id))
                 : new List<Servicio>();
 
-            // Obtener información de usuarios
             var usuariosDto = new List<OrdenServicioUsuarioDto>();
             foreach (var usuarioAsignado in usuariosAsignados)
             {
@@ -1011,7 +1058,7 @@ namespace MecanicApp.Controllers
                 VehiculoId = orden.VehiculoId,
                 PlacaVehiculo = vehiculo?.Placa ?? string.Empty,
                 ClienteId = vehiculo?.ClienteId,
-                ClienteNombre = "",
+                ClienteNombre = cliente != null ? cliente.Nombre : "",
                 FechaEntrada = orden.FechaEntrada,
                 FechaSalida = orden.FechaSalida,
                 Estado = orden.Estado,
@@ -1021,7 +1068,12 @@ namespace MecanicApp.Controllers
                 Descuento = orden.Descuento,
                 Impuesto = orden.Impuesto,
                 Total = orden.Total,
-                DuracionTotalEstimada = orden.DuracionTotalEstimada, // ✅ NUEVO CAMPO
+                DuracionTotalEstimada = orden.DuracionTotalEstimada,
+                FormaPago = orden.FormaPago,
+                ValidezOferta = orden.ValidezOferta,
+                FechaEntrega = orden.FechaEntrega,
+                EspecificacionAveria = orden.EspecificacionAveria,
+                EstadoCarroceria = orden.EstadoCarroceria,
                 Detalles = detalles.Select(d => new OrdenServicioDetalleDto
                 {
                     Id = d.Id,
@@ -1257,6 +1309,13 @@ namespace MecanicApp.Controllers
             public decimal Impuesto { get; set; }
             public decimal Total { get; set; }
             public int DuracionTotalEstimada { get; set; }
+
+            public string? FormaPago { get; set; }
+            public string? ValidezOferta { get; set; }
+            public DateTime? FechaEntrega { get; set; }
+            public string? EspecificacionAveria { get; set; }
+            public string? EstadoCarroceria { get; set; }
+
             public List<OrdenServicioDetalleDto> Detalles { get; set; }
             public List<OrdenServicioUsuarioDto> UsuariosAsignados { get; set; }
             public DateTime CreationTime { get; set; }
@@ -1340,6 +1399,14 @@ namespace MecanicApp.Controllers
                 Estado = string.Empty;
                 Observaciones = string.Empty;
             }
+        }
+
+        public class UpdateDocumentosDto
+        {
+            public string? FormaPago { get; set; }
+            public string? ValidezOferta { get; set; }
+            public string? EspecificacionAveria { get; set; }
+            public string? EstadoCarroceria { get; set; }
         }
 
         public class CreateDetalleDto

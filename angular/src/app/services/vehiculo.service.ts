@@ -12,6 +12,8 @@ export interface Vehiculo {
   color: string;
   clienteId: string;
   clienteNombre?: string;
+  kilometraje?: number;
+  cilindrada?: string;
 }
 
 export interface CreateVehiculoDto {
