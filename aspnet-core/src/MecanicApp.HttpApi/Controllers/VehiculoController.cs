@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc;
@@ -28,6 +29,9 @@ namespace MecanicApp.Controllers
             try
             {
                 var vehiculos = await _vehiculoRepository.GetListAsync(includeDetails: true);
+                var clienteIds = vehiculos.Select(v => v.ClienteId).Distinct().ToList();
+                var clientes = await _clienteRepository.GetListAsync();
+                var clientesDict = clientes.ToDictionary(c => c.Id, c => c.Nombre);
                 var dtos = new List<VehiculoDto>();
 
                 foreach (var vehiculo in vehiculos)
@@ -41,8 +45,9 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
-                        ClienteNombre = vehiculo.Cliente?.Nombre,
+                        ClienteNombre = clientesDict.ContainsKey(vehiculo.ClienteId) ? clientesDict[vehiculo.ClienteId] : null,
                         CreationTime = vehiculo.CreationTime
                     });
                 }
@@ -74,6 +79,7 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
                         ClienteNombre = vehiculo.Cliente?.Nombre,
                         CreationTime = vehiculo.CreationTime
@@ -82,7 +88,7 @@ namespace MecanicApp.Controllers
             }
             catch (Exception ex)
             {
-                return NotFound(new { success = false, error = "Vehículo no encontrado", details = ex.Message });
+                return NotFound(new { success = false, error = "Vehï¿½culo no encontrado", details = ex.Message });
             }
         }
 
@@ -105,6 +111,7 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
                         CreationTime = vehiculo.CreationTime
                     });
@@ -126,7 +133,7 @@ namespace MecanicApp.Controllers
                 var vehiculo = await _vehiculoRepository.FirstOrDefaultAsync(v => v.Placa == placa);
 
                 if (vehiculo == null)
-                    return NotFound(new { success = false, error = $"Vehículo con placa {placa} no encontrado" });
+                    return NotFound(new { success = false, error = $"Vehï¿½culo con placa {placa} no encontrado" });
 
                 return Ok(new
                 {
@@ -140,6 +147,7 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
                         ClienteNombre = vehiculo.Cliente?.Nombre,
                         CreationTime = vehiculo.CreationTime
@@ -164,6 +172,7 @@ namespace MecanicApp.Controllers
                 {
                     Anio = input.Anio,
                     Color = input.Color,
+                    Cilindrada = input.Cilindrada,
                     Kilometraje = input.Kilometraje
                 };
 
@@ -172,7 +181,7 @@ namespace MecanicApp.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = "Vehículo creado exitosamente",
+                    message = "Vehï¿½culo creado exitosamente",
                     data = new VehiculoDto
                     {
                         Id = vehiculo.Id,
@@ -182,6 +191,7 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
                         ClienteNombre = cliente.Nombre,
                         CreationTime = vehiculo.CreationTime
@@ -206,6 +216,7 @@ namespace MecanicApp.Controllers
                 vehiculo.Modelo = input.Modelo;
                 vehiculo.Anio = input.Anio;
                 vehiculo.Color = input.Color;
+                vehiculo.Cilindrada = input.Cilindrada;
                 vehiculo.Kilometraje = input.Kilometraje;
                 vehiculo.ClienteId = input.ClienteId;
 
@@ -217,7 +228,7 @@ namespace MecanicApp.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = "Vehículo actualizado exitosamente",
+                    message = "Vehï¿½culo actualizado exitosamente",
                     data = new VehiculoDto
                     {
                         Id = vehiculo.Id,
@@ -227,6 +238,7 @@ namespace MecanicApp.Controllers
                         Anio = vehiculo.Anio,
                         Color = vehiculo.Color,
                         Kilometraje = vehiculo.Kilometraje,
+                        Cilindrada = vehiculo.Cilindrada,
                         ClienteId = vehiculo.ClienteId,
                         ClienteNombre = cliente.Nombre,
                         CreationTime = vehiculo.CreationTime
@@ -245,7 +257,7 @@ namespace MecanicApp.Controllers
             try
             {
                 await _vehiculoRepository.DeleteAsync(id, autoSave: true);
-                return Ok(new { success = true, message = "Vehículo eliminado exitosamente" });
+                return Ok(new { success = true, message = "Vehï¿½culo eliminado exitosamente" });
             }
             catch (Exception ex)
             {
@@ -262,6 +274,7 @@ namespace MecanicApp.Controllers
         public string Modelo { get; set; }
         public int? Anio { get; set; }
         public string Color { get; set; }
+        public string? Cilindrada { get; set; }
         public decimal? Kilometraje { get; set; }
         public Guid ClienteId { get; set; }
         public string ClienteNombre { get; set; }
@@ -275,6 +288,7 @@ namespace MecanicApp.Controllers
         public string Modelo { get; set; }
         public int? Anio { get; set; }
         public string Color { get; set; }
+        public string? Cilindrada { get; set; }
         public decimal? Kilometraje { get; set; }
         public Guid ClienteId { get; set; }
     }
@@ -286,6 +300,7 @@ namespace MecanicApp.Controllers
         public string Modelo { get; set; }
         public int? Anio { get; set; }
         public string Color { get; set; }
+        public string? Cilindrada { get; set; }
         public decimal? Kilometraje { get; set; }
         public Guid ClienteId { get; set; }
     }

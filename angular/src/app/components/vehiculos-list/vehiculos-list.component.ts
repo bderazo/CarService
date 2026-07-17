@@ -56,19 +56,25 @@ import { ClienteService, Cliente } from '../../services/cliente.service';
                        [(ngModel)]="nuevoVehiculo.modelo" 
                        name="modelo" required>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Año</label>
                 <input type="number" class="form-control" 
                        [(ngModel)]="nuevoVehiculo.anio" 
                        name="anio" min="1900" max="2030">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Color</label>
                 <input type="text" class="form-control" 
                        [(ngModel)]="nuevoVehiculo.color" 
                        name="color">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
+                <label class="form-label">Cilindrada</label>
+                <input type="text" class="form-control" 
+                       [(ngModel)]="nuevoVehiculo.cilindrada" 
+                       name="cilindrada" placeholder="Ej: 1.6L, 2000cc">
+              </div>
+              <div class="col-md-3">
                 <label class="form-label">Kilometraje (km)</label>
                 <input type="number" class="form-control" 
                        [(ngModel)]="nuevoVehiculo.kilometraje" 
@@ -166,6 +172,7 @@ export class VehiculosListComponent implements OnInit {
     anio: new Date().getFullYear(),
     color: '',
     clienteId: '',
+    cilindrada: '',
     kilometraje: 0 as number | undefined
   };
 
@@ -222,6 +229,7 @@ export class VehiculosListComponent implements OnInit {
       anio: vehiculo.anio,
       color: vehiculo.color,
       clienteId: vehiculo.clienteId,
+      cilindrada: vehiculo.cilindrada,
       kilometraje: vehiculo.kilometraje
     };
     this.mostrandoFormulario = true;
@@ -241,6 +249,7 @@ export class VehiculosListComponent implements OnInit {
       anio: new Date().getFullYear(),
       color: '',
       clienteId: '',
+      cilindrada: '',
       kilometraje: 0 as number | undefined
     };
   }

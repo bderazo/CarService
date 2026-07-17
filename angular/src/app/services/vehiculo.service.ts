@@ -23,6 +23,8 @@ export interface CreateVehiculoDto {
   anio: number;
   color: string;
   clienteId: string;
+  cilindrada?: string;
+  kilometraje?: number;
 }
 
 export interface UpdateVehiculoDto {
@@ -32,6 +34,8 @@ export interface UpdateVehiculoDto {
   anio: number;
   color: string;
   clienteId: string;
+  cilindrada?: string;
+  kilometraje?: number;
 }
 
 @Injectable({

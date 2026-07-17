@@ -58,7 +58,13 @@ export class OrdenTrabajoPdfService {
     y = this.sectionTitle(doc, 'INFORMACIÓN DEL CLIENTE', y, M);
     y += 2;
 
-    const cliH = 30;
+    // Calcular alto necesario según observaciones
+    const obsMaxW = usable / 2 - 30;
+    const obsText = orden.observaciones || '-';
+    const splitObs = doc.splitTextToSize(obsText, obsMaxW);
+    const obsLines = Math.min(splitObs.length, 3);
+    const cliH = 30 + (obsLines > 1 ? (obsLines - 1) * 4 : 0);
+
     doc.setDrawColor(...this.BLUE);
     doc.setLineWidth(0.3);
     doc.setFillColor(245, 248, 252);
@@ -87,7 +93,12 @@ export class OrdenTrabajoPdfService {
     cY += 7;
     f2('E-mail:', cliente.email, 'CI / RUC:', cliente.cedula, cY);
     cY += 7;
-    f2('Teléfono:', cliente.telefono, 'Observaciones:', orden.observaciones, cY);
+    f2('Teléfono:', cliente.telefono, 'Observaciones:', '', cY);
+
+    // Observaciones con wrap
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(splitObs.slice(0, 3), rL + 26, cY);
 
     y += cliH + 5;
 
@@ -175,17 +186,21 @@ export class OrdenTrabajoPdfService {
     y += 1;
 
     const averia = orden.especificacionAveria || '';
-    const averiaH = 14;
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+
+    const avSplit = averia ? doc.splitTextToSize(averia, usable - 6) : [];
+    const avLines = Math.max(avSplit.length, 1);
+    const averiaH = Math.max(14, avLines * 4 + 6);
+
     doc.setDrawColor(...this.BLUE);
     doc.setLineWidth(0.3);
     doc.setFillColor(255, 255, 255);
     doc.roundedRect(M, y, usable, averiaH, 2, 2, 'FD');
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(30, 30, 30);
+
     if (averia) {
-      const splitAv = doc.splitTextToSize(averia, usable - 6);
-      doc.text(splitAv, M + 3, y + 5);
+      doc.text(avSplit, M + 3, y + 5);
     } else {
       doc.setTextColor(180, 180, 180);
       doc.text('Escriba la especificación de la avería...', M + 3, y + 5);
@@ -194,9 +209,6 @@ export class OrdenTrabajoPdfService {
     y += averiaH + 5;
 
     // ─── EL VEHÍCULO INGRESA CON / ESTADO CARROCERÍA ───
-    y = this.sectionTitle(doc, 'EL VEHÍCULO INGRESA CON / ESTADO CARROCERÍA', y, M);
-    y += 2;
-
     const accItems = ['Radio', 'Tapa gasolina', 'Encendedor', 'Herramientas', 'Moquetas', 'Retrovisores',
       'Espejo interior', 'Plumas', 'Alarma', 'Manuales', 'Extintor', 'Botiquín',
       'Gata y palanca', 'Llaves de ruedas', 'Llanta de repuesto', 'Emblema delantero',
@@ -207,10 +219,30 @@ export class OrdenTrabajoPdfService {
     const accCol2 = accItems.slice(accHalf);
     const accRows = Math.max(accCol1.length, accCol2.length);
 
-    const accH = accRows * 5 + 10;
+    const accH = accRows * 5 + 18;
+    const schemaH = 50;
+    const seccionEstH = 8 + Math.max(accH, schemaH) + 5;
+
+    if (y + seccionEstH > H - M) {
+      doc.addPage();
+      y = M;
+    }
+
+    y = this.sectionTitle(doc, 'EL VEHÍCULO INGRESA CON / ESTADO CARROCERÍA', y, M);
+    y += 2;
+
+    // Dos columnas: izquierda (checklist), derecha (esquema de abolladuras)
+    const gapCols = 4;
+    const leftW = (usable - gapCols) * 0.52;
+    const rightW = usable - gapCols - leftW;
+    const leftX = M;
+    const rightX = M + leftW + gapCols;
+    const colH = Math.max(accH, schemaH);
+
+    // ─── COLUMNA IZQUIERDA: Checklist ───
     doc.setDrawColor(...this.BLUE);
     doc.setFillColor(245, 248, 252);
-    doc.roundedRect(M, y, usable, accH, 2, 2, 'FD');
+    doc.roundedRect(leftX, y, leftW, colH, 2, 2, 'FD');
 
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
@@ -219,73 +251,182 @@ export class OrdenTrabajoPdfService {
     for (let i = 0; i < accRows; i++) {
       const rowY = y + 5 + i * 5;
       if (i < accCol1.length) {
-        this.checkbox(doc, M + 4, rowY - 2.5);
-        doc.text(accCol1[i], M + 10, rowY);
+        this.checkbox(doc, leftX + 3, rowY - 2.5);
+        doc.text(accCol1[i], leftX + 8, rowY);
       }
       if (i < accCol2.length) {
-        this.checkbox(doc, M + usable / 2 + 2, rowY - 2.5);
-        doc.text(accCol2[i], M + usable / 2 + 8, rowY);
+        this.checkbox(doc, leftX + leftW / 2 + 1, rowY - 2.5);
+        doc.text(accCol2[i], leftX + leftW / 2 + 6, rowY);
       }
     }
 
-    // Estado de carrocería text at bottom
-    const estY = y + accRows * 5 + 5;
+    // Estado de carrocería + Nivel de combustible en la misma fila
+    const estY = y + accRows * 5 + 8;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
     doc.setTextColor(...this.GRAY);
-    doc.text(`Estado: ${orden.estadoCarroceria || 'No especificado'}`, M + 4, estY);
+    doc.text(`Estado: ${orden.estadoCarroceria || 'No especificado'}`, leftX + 3, estY);
 
-    // Nivel de combustible
-    const combX = M + usable - 40;
-    doc.setFont('helvetica', 'bold');
-    doc.text('NIVEL DE', combX, y + 5);
-    doc.text('COMBUSTIBLE', combX, y + 9);
+    // Nivel de combustible a la derecha del estado
+    const combX = leftX + leftW - 38;
+    doc.text('NIVEL DE', combX, estY - 4);
+    doc.text('COMBUSTIBLE', combX, estY);
     doc.setDrawColor(...this.GRAY);
     doc.setLineWidth(0.2);
-    doc.roundedRect(combX, y + 11, 36, 10, 1, 1, 'S');
+    doc.roundedRect(combX, estY + 2, 34, 8, 1, 1, 'S');
 
-    y += accH + 5;
-
-    // ─── ESQUEMA DE ABOLLADURAS ───
-    y = this.sectionTitle(doc, 'ESQUEMA DE ABOLLADURAS, GOLPES, QUEBRADOS O RAYADURAS', y, M);
-    y += 2;
-
-    const schemaH = 50;
+    // ─── COLUMNA DERECHA: Esquema de abolladuras ───
     doc.setDrawColor(...this.BLUE);
     doc.setLineWidth(0.3);
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(M, y, usable, schemaH, 2, 2, 'FD');
+    doc.roundedRect(rightX, y, rightW, colH, 2, 2, 'FD');
 
-    // Labels
-    doc.setFontSize(7);
+    // Título dentro del recuadro
+    doc.setFontSize(6.5);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...this.GRAY);
-    doc.text('SUPERIOR', M + usable / 2, y + 5, { align: 'center' });
-    doc.text('FRONTAL', M + 30, y + 10);
-    doc.text('POSTERIOR', M + usable - 30, y + 10);
-    doc.text('DERECHO', M + usable / 2, y + 18, { align: 'center' });
-    doc.text('IZQUIERDO', M + usable / 2, y + 35, { align: 'center' });
+    doc.setTextColor(...this.BLUE);
+    doc.text('ESQUEMA DE ABOLLADURAS,', rightX + rightW / 2, y + 4, { align: 'center' });
+    doc.text('GOLPES, QUEBRADOS O RAYADURAS', rightX + rightW / 2, y + 8, { align: 'center' });
 
-    // Simple car outline (top view)
-    const cx = M + usable / 2;
-    const cy = y + 25;
-    doc.setDrawColor(...this.GRAY);
+    // Layout en cruz - plano técnico
+    const schPad = 2.5;
+    const schGap = 2;
+    const schInnerTop = y + 11;
+    const totalW = rightW - schPad * 2;
+    const totalH = colH - 13;
+
+    // Dimensiones proporcionales
+    const supW = totalW * 0.42;
+    const supH = totalH * 0.28;
+    const sideW = supW;
+    const sideH = (totalH - supH - schGap * 2) / 2;
+    const wingW = (totalW - supW - schGap * 2) / 2;
+    const wingH = supH;
+
+    // Posiciones
+    const centerX = schPad + wingW + schGap;
+    const midY = schInnerTop + sideH + schGap;
+
+    const lineColor = this.BLUE;
+    doc.setDrawColor(...lineColor);
     doc.setLineWidth(0.3);
 
-    // Body
-    doc.roundedRect(cx - 15, cy - 10, 30, 20, 3, 3, 'S');
-    // Front
-    doc.line(cx - 12, cy - 10, cx - 10, cy - 14);
-    doc.line(cx + 10, cy - 10, cx + 12, cy - 14);
-    doc.line(cx - 10, cy - 14, cx + 12, cy - 14);
-    // Rear
-    doc.line(cx - 12, cy + 10, cx - 10, cy + 14);
-    doc.line(cx + 10, cy + 10, cx + 12, cy + 14);
-    doc.line(cx - 10, cy + 14, cx + 12, cy + 14);
+    // ─── VISTA SUPERIOR (centro) ───
+    const supX = rightX + centerX;
+    const supY = midY;
+    doc.roundedRect(supX, supY, supW, supH, 1.5, 1.5, 'S');
+    // Rectángulos internos verticales
+    const innerLx = supX + supW * 0.28;
+    const innerRx = supX + supW * 0.62;
+    const innerW1 = supW * 0.08;
+    const innerW2 = supW * 0.12;
+    const innerGap = 3;
+    doc.roundedRect(innerLx, supY + innerGap, innerW1, supH - innerGap * 2, 0.5, 0.5, 'S');
+    doc.roundedRect(innerRx, supY + innerGap, innerW2, supH - innerGap * 2, 0.5, 0.5, 'S');
+    // Línea vertical punteada (eje central)
+    const axisX = supX + supW / 2;
+    doc.setLineDashPattern([1, 1], 0);
+    doc.line(axisX, supY + 2, axisX, supY + supH - 2);
+    doc.setLineDashPattern([], 0);
+    // Ranuras superior e inferior
+    const slotW = supW * 0.15;
+    doc.line(axisX - slotW / 2, supY + 1, axisX + slotW / 2, supY + 1);
+    doc.line(axisX - slotW / 2, supY + supH - 1, axisX + slotW / 2, supY + supH - 1);
+    // Texto
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('SUPERIOR', supX + supW / 2, supY + supH / 2 + 1.5, { align: 'center' });
 
-    y += schemaH + 5;
+    // ─── VISTA FRONTAL (izquierda) ───
+    const frX = rightX + schPad;
+    const frW = wingW;
+    const frH = wingH;
+    const frY = midY;
+    doc.roundedRect(frX, frY, frW, frH, 1.5, 1.5, 'S');
+    // Rectángulo vertical estrecho (borde izquierdo)
+    doc.roundedRect(frX + 2, frY + 3, 1.5, frH - 6, 0.3, 0.3, 'S');
+    // Círculo esquina superior izquierda
+    doc.circle(frX + frW * 0.4, frY + frH * 0.25, 1.5, 'S');
+    // Círculo esquina inferior izquierda
+    doc.circle(frX + frW * 0.4, frY + frH * 0.75, 1.5, 'S');
+    // Texto
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('FRONTAL', frX + frW / 2, frY + frH / 2 + 1.5, { align: 'center' });
+
+    // ─── VISTA POSTERIOR (derecha) ───
+    const poX = rightX + centerX + supW + schGap;
+    const poW = wingW;
+    const poH = wingH;
+    const poY = midY;
+    doc.roundedRect(poX, poY, poW, poH, 1.5, 1.5, 'S');
+    // Rectángulo horizontal (esquina superior izquierda)
+    doc.roundedRect(poX + 2, poY + 2, poW * 0.35, 2, 0.3, 0.3, 'S');
+    // Rectángulo vertical (borde derecho)
+    doc.roundedRect(poX + poW - 3.5, poY + 3, 1.5, poH - 6, 0.3, 0.3, 'S');
+    // Cuadrado (esquina inferior izquierda)
+    doc.roundedRect(poX + 2, poY + poH - 5, 2.5, 2.5, 0.3, 0.3, 'S');
+    // Texto
+    doc.setFontSize(5.5);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('POSTERIOR', poX + poW / 2, poY + poH / 2 + 1.5, { align: 'center' });
+
+    // ─── Función para vista lateral (DERECHO / IZQUIERDO) ───
+    const drawSideView = (lx: number, ly: number, lw: number, lh: number, label: string, flipY: boolean) => {
+      const arcR = lw / 2;
+      const bodyH = lh - arcR;
+      // Línea recta (puede ser arriba o abajo según flip)
+      const flatY = flipY ? ly : ly + lh;
+      const arcCenterY = flipY ? ly + bodyH : ly + arcR;
+      // Línea recta
+      doc.line(lx, flatY, lx + lw, flatY);
+      // Líneas laterales
+      if (flipY) {
+        doc.line(lx, flatY, lx, ly + bodyH);
+        doc.line(lx + lw, flatY, lx + lw, ly + bodyH);
+      } else {
+        doc.line(lx, flatY, lx, ly + bodyH);
+        doc.line(lx + lw, flatY, lx + lw, ly + bodyH);
+      }
+      // Arco semicircular
+      const steps = 20;
+      for (let i = 0; i < steps; i++) {
+        const a1 = flipY ? 0 + (Math.PI * i) / steps : Math.PI + (Math.PI * i) / steps;
+        const a2 = flipY ? 0 + (Math.PI * (i + 1)) / steps : Math.PI + (Math.PI * (i + 1)) / steps;
+        const x1 = lx + arcR + arcR * Math.cos(a1);
+        const y1 = arcCenterY + arcR * Math.sin(a1);
+        const x2 = lx + arcR + arcR * Math.cos(a2);
+        const y2 = arcCenterY + arcR * Math.sin(a2);
+        doc.line(x1, y1, x2, y2);
+      }
+      // Dos círculos internos alineados horizontalmente (cerca del lado recto)
+      const circleY = flipY ? ly + bodyH * 0.45 : ly + lh - bodyH * 0.45;
+      doc.circle(lx + lw * 0.25, circleY, 1.5, 'S');
+      doc.circle(lx + lw * 0.75, circleY, 1.5, 'S');
+      // Texto
+      doc.setFontSize(5.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...this.GRAY);
+      doc.text(label, lx + lw / 2, ly + lh / 2 + 1, { align: 'center' });
+    };
+
+    // ─── VISTA DERECHO (arriba) - curva arriba, recta abajo ───
+    drawSideView(rightX + centerX, schInnerTop, sideW, sideH, 'DERECHO', false);
+
+    // ─── VISTA IZQUIERDO (abajo) - recta arriba (mirando a SUPERIOR), curva abajo ───
+    drawSideView(rightX + centerX, midY + supH + schGap, sideW, sideH, 'IZQUIERDO', true);
+
+    y += colH + 5;
 
     // ─── OBSERVACIONES DE RECEPCIÓN ───
+    const obsEstH = 8 + 16 + 5;
+    if (y + obsEstH > H - M) {
+      doc.addPage();
+      y = M;
+    }
     y = this.sectionTitle(doc, 'Observaciones de Recepción:', y, M);
     y += 1;
 
@@ -313,38 +454,30 @@ export class OrdenTrabajoPdfService {
     y += obsH + 5;
 
     // ═══════════ PÁGINA 2 ═══════════
-    doc.addPage();
-    y = M;
+    const condEstH = 8 + 6 + 10 + 18 + 16 + 20 + 5; // título + caja condiciones + firma1 + fecha + firma2 + margen
+    if (y + condEstH > H - M) {
+      doc.addPage();
+      y = M;
+    }
 
     // ─── CONDICIONES DE TRABAJO ───
     y = this.sectionTitle(doc, 'CONDICIONES DE TRABAJO', y, M);
     y += 2;
 
+    const condText = 'Garantizo y aseguro ser el dueño o estar autorizado por el dueño a ordenar la reparación. Por medio de la firma en pie, autorizo realizar los trabajos, usar los materiales y repuestos necesarios para reparar los daños o fallas descritas en esta orden de trabajo. Autorizo realizar fuera de su taller las pruebas que juzguen convenientes para asegurarse la efectividad del trabajo hecho en mi vehículo. Acepto cancelar de contado el valor de la factura de las reparaciones antes de retirar mi vehículo y en caso de no hacerlo, otorgo el derecho al taller de disponer del vehículo antes mencionado en caso de no pagar las reparaciones y repuestos utilizados para amparar su costo, además me someteré al trámite verbal sumario y a los jueces de la ciudad. El taller de servicio no asume responsabilidades de ninguna clase por daño o pérdida en los vehículos en reparación o en prueba dentro o fuera del taller, debido a fenómenos fuera de su control como accidentes, incendios, asaltos, derrumbes, terremotos, inundaciones, etc. No se asume responsabilidad sobre objetos dejados en el vehículo que no sean parte de este y que no consten en la selección y observaciones de esta orden de trabajo. (NO FIRMAR SIN LEER).';
+
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(60, 60, 60);
 
-    const conditions = [
-      'Garantizo y aseguro ser el dueño o estar autorizado por el dueño a ordenar la reparación.',
-      'Por medio de la firma en pie, autorizo realizar los trabajos, usar los materiales y repuestos necesarios para reparar los daños o fallas descritas en esta orden de trabajo.',
-      'Autorizo realizar fuera de su taller las pruebas que juzguen convenientes para asegurarse la efectividad del trabajo hecho en mi vehículo.',
-      'Acepto cancelar de contado el valor de la factura de las reparaciones antes de retirar mi vehículo y en caso de no hacerlo, otorgo el derecho al taller de disponer del vehículo antes',
-      'mencionado en caso de no pagar las reparaciones y repuestos utilizados para amparar su costo, además me someteré al trámite verbal sumario y a los jueces de la ciudad.',
-      'El taller de servicio no asume responsabilidades de ninguna clase por daño o pérdida en los vehículos en reparación o en prueba dentro o fuera del taller, debido a fenómenos fuera de',
-      'su control como accidentes, incendios, asaltos, derrumbes, terremotos, inundaciones, etc.',
-      'No se asume responsabilidad sobre objetos dejados en el vehículo que no sean parte de este y que no consten en la selección y observaciones de esta orden de trabajo. (NO FIRMAR SIN LEER).'
-    ];
+    const splitCond = doc.splitTextToSize(condText, usable - 6);
+    const condBoxH = splitCond.length * 3.8 + 6;
 
-    const condBoxH = conditions.length * 3.8 + 6;
     doc.setDrawColor(...this.BLUE);
     doc.setFillColor(250, 250, 252);
     doc.roundedRect(M, y, usable, condBoxH, 2, 2, 'FD');
 
-    let condY = y + 5;
-    conditions.forEach(line => {
-      doc.text(line, M + 3, condY);
-      condY += 3.8;
-    });
+    doc.text(splitCond, M + 3, y + 5);
 
     y += condBoxH + 10;
 
