@@ -121,7 +121,7 @@ export class OrdenTrabajoPdfService {
 
     f3('Marca:', vehiculo.marca, 'Modelo:', vehiculo.modelo, 'Placa:', vehiculo.placa, vY);
     vY += 8;
-    f3('Color:', vehiculo.color, 'Cilindrada:', vehiculo.cilindrada, 'Kilometraje:', vehiculo.kilometraje?.toString(), vY);
+    f3('Color:', vehiculo.color, 'Cilindrada:', vehiculo.cilindrada, 'Kilometraje:', orden.kilometrajeIngreso?.toString(), vY);
     vY += 8;
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.GRAY);

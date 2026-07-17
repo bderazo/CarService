@@ -139,7 +139,7 @@ export class ProformaPdfService {
     doc.setTextColor(30, 30, 30);
     doc.text(vehiculo.placa || '-', vCol1 + 14, vY);
 
-    const km = vehiculo.kilometraje ? `${vehiculo.kilometraje} km` : '-';
+    const km = orden.kilometrajeIngreso ? `${orden.kilometrajeIngreso} km` : '-';
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.GRAY);
     doc.text('Año / Km:', vCol2, vY);

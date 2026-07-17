@@ -31,6 +31,7 @@ namespace MecanicApp.Entities
         public DateTime? FechaEntrega { get; set; }
         public string? EspecificacionAveria { get; set; }
         public string? EstadoCarroceria { get; set; }
+        public decimal? KilometrajeIngreso { get; set; }
 
         // Relaciones
         public virtual ICollection<OrdenServicioDetalle> Detalles { get; set; }

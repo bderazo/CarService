@@ -77,6 +77,19 @@ import { HttpErrorResponse } from '@angular/common/http';
                     >
                   </div>
 
+                  <!-- Kilometraje de ingreso -->
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Kilometraje de Ingreso (km)</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      [(ngModel)]="nuevaOrden.kilometrajeIngreso"
+                      name="kilometrajeIngreso"
+                      min="0"
+                      placeholder="Ej: 45000"
+                    />
+                  </div>
+
                   <!-- Observaciones -->
                   <div class="col-12">
                     <label class="form-label">Observaciones</label>
@@ -1054,6 +1067,7 @@ export class OrdenNuevaComponent implements OnInit {
       vehiculoId: this.nuevaOrden.vehiculoId,
       estado: this.nuevaOrden.estado,
       observaciones: this.nuevaOrden.observaciones,
+      kilometrajeIngreso: this.nuevaOrden.kilometrajeIngreso,
       detalles: detallesConUsuarios,
       usuariosAsignados: usuariosAsignadosDto,
     };

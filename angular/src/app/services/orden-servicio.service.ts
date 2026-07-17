@@ -43,6 +43,7 @@ export interface OrdenServicio {
   fechaEntrega?: Date;
   especificacionAveria?: string;
   estadoCarroceria?: string;
+  kilometrajeIngreso?: number;
 
   detalles: OrdenServicioDetalle[];
   usuariosAsignados: OrdenServicioUsuario[];
@@ -79,6 +80,7 @@ export interface CreateOrdenServicioDto {
   vehiculoId: string;
   estado: string;
   observaciones: string;
+  kilometrajeIngreso?: number;
   detalles: CreateDetalleDto[];
   usuariosAsignados?: Array<{
     usuarioId: string;
@@ -271,7 +273,7 @@ export class OrdenServicioService {
   // PUT actualizar documentos (formaPago, validezOferta)
   updateDocumentos(
     id: string,
-    documentos: { formaPago?: string; validezOferta?: string; especificacionAveria?: string; estadoCarroceria?: string },
+    documentos: { formaPago?: string; validezOferta?: string; especificacionAveria?: string; estadoCarroceria?: string; kilometrajeIngreso?: number },
   ): Observable<{ success: boolean; message: string; data: OrdenServicio }> {
     return this.http.put<{ success: boolean; message: string; data: OrdenServicio }>(
       `${this.apiUrl}/${id}/documentos`,

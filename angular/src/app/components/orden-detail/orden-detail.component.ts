@@ -93,6 +93,8 @@ import { OrdenTrabajoPdfService } from '../../services/orden-trabajo-pdf.service
                 <option value="Regular">Regular</option>
                 <option value="Malo">Malo</option>
               </select>
+              <label class="form-label fw-bold mt-3">Kilometraje de Ingreso (km)</label>
+              <input type="number" class="form-control" placeholder="Ej: 45000" [(ngModel)]="orden.kilometrajeIngreso" (ngModelChange)="guardarDocumentos()">
             </div>
           </div>
           <div class="row">
@@ -1541,6 +1543,7 @@ export class OrdenDetailComponent implements OnInit {
       validezOferta: this.orden.validezOferta || '',
       especificacionAveria: this.orden.especificacionAveria || '',
       estadoCarroceria: this.orden.estadoCarroceria || '',
+      kilometrajeIngreso: this.orden.kilometrajeIngreso,
     }).subscribe({
       next: response => {
         if (response.success) {

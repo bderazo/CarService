@@ -68,6 +68,12 @@ import { ClienteService, Cliente } from '../../services/cliente.service';
                        [(ngModel)]="nuevoVehiculo.color" 
                        name="color">
               </div>
+              <div class="col-md-4">
+                <label class="form-label">Kilometraje (km)</label>
+                <input type="number" class="form-control" 
+                       [(ngModel)]="nuevoVehiculo.kilometraje" 
+                       name="kilometraje" min="0" placeholder="Ej: 45000">
+              </div>
               <div class="col-12">
                 <div class="d-flex gap-2">
                   <button type="submit" class="btn btn-success" [disabled]="!vehiculoForm.valid">
@@ -159,7 +165,8 @@ export class VehiculosListComponent implements OnInit {
     modelo: '',
     anio: new Date().getFullYear(),
     color: '',
-    clienteId: ''
+    clienteId: '',
+    kilometraje: 0 as number | undefined
   };
 
   constructor(
@@ -208,7 +215,15 @@ export class VehiculosListComponent implements OnInit {
 
   editarVehiculo(vehiculo: Vehiculo): void {
     this.vehiculoEditando = vehiculo;
-    this.nuevoVehiculo = { ...vehiculo };
+    this.nuevoVehiculo = {
+      placa: vehiculo.placa,
+      marca: vehiculo.marca,
+      modelo: vehiculo.modelo,
+      anio: vehiculo.anio,
+      color: vehiculo.color,
+      clienteId: vehiculo.clienteId,
+      kilometraje: vehiculo.kilometraje
+    };
     this.mostrandoFormulario = true;
   }
 
@@ -225,7 +240,8 @@ export class VehiculosListComponent implements OnInit {
       modelo: '',
       anio: new Date().getFullYear(),
       color: '',
-      clienteId: ''
+      clienteId: '',
+      kilometraje: 0 as number | undefined
     };
   }
 

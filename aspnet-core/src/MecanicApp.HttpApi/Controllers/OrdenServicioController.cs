@@ -280,6 +280,7 @@ namespace MecanicApp.Controllers
                         FechaEntrega = orden.FechaEntrega,
                         EspecificacionAveria = orden.EspecificacionAveria,
                         EstadoCarroceria = orden.EstadoCarroceria,
+                        KilometrajeIngreso = orden.KilometrajeIngreso,
                         Detalles = detalles.Select(d => new OrdenServicioDetalleDto
                         {
                             Id = d.Id,
@@ -466,7 +467,8 @@ namespace MecanicApp.Controllers
                 {
                     Observaciones = input.Observaciones,
                     Estado = input.Estado ?? "COTIZACION",
-                    DuracionTotalEstimada = 0
+                    DuracionTotalEstimada = 0,
+                    KilometrajeIngreso = input.KilometrajeIngreso
                 };
 
                 orden = await _ordenServicioRepository.InsertAsync(orden, autoSave: true);
@@ -624,6 +626,9 @@ namespace MecanicApp.Controllers
 
                 if (input.EstadoCarroceria != null)
                     orden.EstadoCarroceria = input.EstadoCarroceria;
+
+                if (input.KilometrajeIngreso.HasValue)
+                    orden.KilometrajeIngreso = input.KilometrajeIngreso.Value;
 
                 orden = await _ordenServicioRepository.UpdateAsync(orden, autoSave: true);
 
@@ -1074,6 +1079,7 @@ namespace MecanicApp.Controllers
                 FechaEntrega = orden.FechaEntrega,
                 EspecificacionAveria = orden.EspecificacionAveria,
                 EstadoCarroceria = orden.EstadoCarroceria,
+                KilometrajeIngreso = orden.KilometrajeIngreso,
                 Detalles = detalles.Select(d => new OrdenServicioDetalleDto
                 {
                     Id = d.Id,
@@ -1315,6 +1321,7 @@ namespace MecanicApp.Controllers
             public DateTime? FechaEntrega { get; set; }
             public string? EspecificacionAveria { get; set; }
             public string? EstadoCarroceria { get; set; }
+            public decimal? KilometrajeIngreso { get; set; }
 
             public List<OrdenServicioDetalleDto> Detalles { get; set; }
             public List<OrdenServicioUsuarioDto> UsuariosAsignados { get; set; }
@@ -1358,6 +1365,7 @@ namespace MecanicApp.Controllers
             public Guid VehiculoId { get; set; }
             public string Estado { get; set; }
             public string Observaciones { get; set; }
+            public decimal? KilometrajeIngreso { get; set; }
             public List<CreateDetalleDto> Detalles { get; set; }
             public int DuracionTotalEstimada { get; set; }
 
@@ -1407,6 +1415,7 @@ namespace MecanicApp.Controllers
             public string? ValidezOferta { get; set; }
             public string? EspecificacionAveria { get; set; }
             public string? EstadoCarroceria { get; set; }
+            public decimal? KilometrajeIngreso { get; set; }
         }
 
         public class CreateDetalleDto
