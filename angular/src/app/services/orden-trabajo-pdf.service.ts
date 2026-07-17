@@ -479,19 +479,22 @@ export class OrdenTrabajoPdfService {
 
     doc.text(splitCond, M + 3, y + 5);
 
-    y += condBoxH + 10;
+    y += condBoxH + 3;
 
-    // ─── FIRMAS PRINCIPALES ───
-    const firmaW = 75;
-    const firmaGap = 10;
+    // ─── FIRMAS Y FECHAS EN FORMATO TABLA 2x2 ───
+    const firmaW = (usable - 10) / 2; // Dos columnas con espacio entre ellas
+    const firmaH = 24; // Altura de cada celda
+    const startY = y;
 
-    // 3 firmas en fila
-    const fY1 = y;
-    this.drawFirma(doc, M, fY1, firmaW, 'FIRMA DEL CLIENTE', 'AL INGRESAR AL TALLER');
-    this.drawFirma(doc, M + firmaW + firmaGap, fY1, firmaW, 'RESPONSABLE QUE RECIBE', 'TÉC. RESPONSABLE DEL TRABAJO');
+    // Celda (1,1) - FIRMA DEL CLIENTE
+    this.drawFirma(doc, M, startY, firmaW, firmaH, 'FIRMA DEL CLIENTE', 'AL INGRESAR AL TALLER');
 
-    y += 18;
+    // Celda (1,2) - RESPONSABLE QUE RECIBE
+    this.drawFirma(doc, M + firmaW + 10, startY, firmaW, firmaH, 'RESPONSABLE QUE RECIBE', 'TÉC. RESPONSABLE DEL TRABAJO');
 
+    y = startY + firmaH + 6; // Espacio entre filas
+
+    // Celda (2,1) - FECHA DE ENTREGA
     // ─── FECHA DE ENTREGA ───
     const fechaEntregaBoxW = 60;
     doc.setDrawColor(...this.BLUE);
@@ -508,29 +511,10 @@ export class OrdenTrabajoPdfService {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
     doc.text(fechaEnt, M + fechaEntregaBoxW / 2, y + 11, { align: 'center' });
+    // Celda (2,2) - FIRMA DE RECIBIDO VEHÍCULO
+    this.drawFirma(doc, M + firmaW + 10, y, firmaW, firmaH, 'FIRMA DE RECIBIDO VEHÍCULO', 'AL SALIR DEL TALLER');
 
-    y += 22;
-
-    // ─── FIRMA DE RECIBIDO VEHÍCULO ───
-    doc.setDrawColor(...this.BLUE);
-    doc.setLineWidth(0.3);
-    doc.setFillColor(245, 248, 252);
-    const recW = usable;
-    doc.roundedRect(M, y, recW, 20, 2, 2, 'FD');
-
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...this.BLUE);
-    doc.text('FIRMA DE RECIBIDO VEHÍCULO', M + recW / 2, y + 6, { align: 'center' });
-    doc.setFontSize(7);
-    doc.setTextColor(...this.GRAY);
-    doc.text('AL SALIR DEL TALLER', M + recW / 2, y + 10, { align: 'center' });
-
-    doc.setDrawColor(...this.GRAY);
-    doc.setLineWidth(0.2);
-    doc.line(M + 20, y + 17, M + recW - 20, y + 17);
-
-    y += 26;
+    y += firmaH + 10;
 
     // ─── LISTA DE VERIFICACIÓN ───
     doc.setFontSize(8);
@@ -584,17 +568,36 @@ export class OrdenTrabajoPdfService {
     doc.rect(x, y, 3, 3, 'FD');
   }
 
-  private drawFirma(doc: jsPDF, x: number, y: number, w: number, line1: string, line2: string) {
-    doc.setDrawColor(...this.GRAY);
-    doc.setLineWidth(0.2);
-    doc.line(x, y, x + w, y);
+  private drawFirma(doc: jsPDF, x: number, y: number, w: number, h: number, titulo: string, subtitulo: string) {
+    // Dibujar recuadro
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(245, 248, 252);
+    doc.roundedRect(x, y, w, h, 2, 2, 'FD');
 
+    // Título (con espacio del borde superior)
     doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...this.GRAY);
-    doc.text(line1, x + w / 2, y + 4, { align: 'center' });
+    doc.setTextColor(...this.BLUE);
+    doc.text(titulo, x + w / 2, y + 4.5, { align: 'center' }); // Cambiado de 2 a 4.5
+
+    // Subtítulo (con espacio adecuado del título)
+    doc.setFontSize(6);
     doc.setFont('helvetica', 'normal');
-    doc.text(line2, x + w / 2, y + 7, { align: 'center' });
+    doc.setTextColor(...this.GRAY);
+    doc.text(subtitulo, x + w / 2, y + 8, { align: 'center' }); // Cambiado de 4 a 8
+
+    // Línea para firma (mantenemos en el borde inferior)
+    doc.setDrawColor(...this.GRAY);
+    doc.setLineWidth(0.2);
+    const lineY = y + h - 1; // Mantenemos en -1
+    doc.line(x + 8, lineY, x + w - 8, lineY);
+
+    // Texto "Firma:" encima de la línea
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...this.GRAY);
+    doc.text('Firma:', x + 10, lineY - 1);
   }
 
   private formatDate(date: any): string {
