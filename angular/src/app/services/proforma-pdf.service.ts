@@ -104,7 +104,7 @@ export class ProformaPdfService {
     y = this.drawSectionTitle(doc, 'DETALLES DEL VEHÍCULO', y, M, W);
     y += 2;
 
-    const vehBoxH = 18;
+    const vehBoxH = 24;
     doc.setDrawColor(...this.BLUE);
     doc.setFillColor(245, 248, 252);
     doc.roundedRect(M, y, usable, vehBoxH, 2, 2, 'FD');
@@ -113,19 +113,39 @@ export class ProformaPdfService {
     doc.setFontSize(9);
     const vCol1 = M + 4;
     const vCol2 = cMid;
+
+    // Fila 1: Marca | Modelo
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.GRAY);
     doc.text('Marca:', vCol1, vY);
-    doc.text('Modelo:', vCol1 + 38, vY);
-    doc.text('Placa:', vCol2, vY);
-    doc.text('Año / Km:', vCol2 + 38, vY);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(30, 30, 30);
     doc.text(vehiculo.marca || '-', vCol1 + 14, vY);
-    doc.text(vehiculo.modelo || '-', vCol1 + 54, vY);
-    doc.text(vehiculo.placa || '-', vCol2 + 16, vY);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('Modelo:', vCol2, vY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(vehiculo.modelo || '-', vCol2 + 18, vY);
+
+    vY += 8;
+
+    // Fila 2: Placa | Año/Km
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('Placa:', vCol1, vY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(vehiculo.placa || '-', vCol1 + 14, vY);
+
     const km = vehiculo.kilometraje ? `${vehiculo.kilometraje} km` : '-';
-    doc.text(`${vehiculo.anio || '-'} / ${km}`, vCol2 + 30, vY);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...this.GRAY);
+    doc.text('Año / Km:', vCol2, vY);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 30, 30);
+    doc.text(`${vehiculo.anio || '-'} / ${km}`, vCol2 + 22, vY);
 
     y = y + vehBoxH + 6;
 
@@ -175,25 +195,33 @@ export class ProformaPdfService {
 
     y = (doc as any).lastAutoTable.finalY + 5;
 
-    // ─── NOTAS IMPORTANTES ───
+    // ─── NOTAS + TOTALES (lado a lado) ───
+    const notasX = M;
+    const totX = W - M - 80;
+    const totW = 80;
+    const notasW = totX - M - 4;
+    const rowY = y;
+
+    // -- Caja de Notas --
+    doc.setDrawColor(...this.BLUE);
+    doc.setLineWidth(0.3);
+    doc.setFillColor(245, 248, 252);
+    doc.roundedRect(notasX, rowY, notasW, 34, 2, 2, 'FD');
+
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...this.BLUE);
-    doc.text('Notas Importantes:', M, y);
-    y += 4;
+    doc.text('Notas Importantes:', notasX + 3, rowY + 5);
+
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(80, 80, 80);
     doc.setFontSize(7);
-    doc.text('- Los valores presupuestados están sujetos a variación si al desarmar se encuentran', M + 2, y);
-    y += 3.5;
-    doc.text('  daños ocultos adicionales, lo cual será notificado previamente al cliente.', M + 2, y);
-    y += 3.5;
-    doc.text('- Los repuestos cotizados están sujetos a disponibilidad de stock en el mercado local/', M + 2, y);
-    y += 3.5;
-    doc.text('  importador.', M + 2, y);
-    y += 6;
+    const notasText = `- Los valores presupuestados están sujetos a variación si al desarmar se encuentran daños ocultos adicionales, lo cual será notificado previamente al cliente.
+- Los repuestos cotizados están sujetos a disponibilidad de stock en el mercado local/importador.`;
+    const splitNotas = doc.splitTextToSize(notasText, notasW - 6);
+    doc.text(splitNotas, notasX + 3, rowY + 10);
 
-    // ─── TOTALES ───
+    // -- Caja de Totales --
     const subtotalMO = detalles
       .filter(d => d.tipo === 'SERVICIO')
       .reduce((s, d) => s + (d.subtotal || 0), 0);
@@ -203,31 +231,23 @@ export class ProformaPdfService {
     const iva = orden.impuesto || 0;
     const total = orden.total || 0;
 
-    const totalsY = y;
-    const totW = 80;
-    const totX = W - M - totW;
-
-    doc.setDrawColor(...this.BLUE);
-    doc.setLineWidth(0.3);
     doc.setFillColor(245, 248, 252);
-    doc.roundedRect(totX, totalsY, totW, 28, 2, 2, 'FD');
+    doc.roundedRect(totX, rowY, totW, 34, 2, 2, 'FD');
 
     doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(50, 50, 50);
-
-    let tY = totalsY + 6;
+    let tY = rowY + 6;
     const drawTot = (label: string, val: string) => {
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(50, 50, 50);
       doc.text(label, totX + 4, tY);
       doc.setFont('helvetica', 'bold');
       doc.text(val, totX + totW - 4, tY, { align: 'right' });
       tY += 7;
     };
 
-    drawTot(`Subtotal M.O.:`, `$${subtotalMO.toFixed(2)}`);
-    drawTot(`Subtotal Repuestos:`, `$${subtotalRep.toFixed(2)}`);
-    drawTot(`IVA (12%):`, `$${iva.toFixed(2)}`);
+    drawTot('Subtotal M.O.:', `$${subtotalMO.toFixed(2)}`);
+    drawTot('Subtotal Repuestos:', `$${subtotalRep.toFixed(2)}`);
+    drawTot('IVA (12%):', `$${iva.toFixed(2)}`);
 
     doc.setDrawColor(...this.BLUE);
     doc.setLineWidth(0.2);
@@ -239,7 +259,7 @@ export class ProformaPdfService {
     doc.text('TOTAL:', totX + 4, tY + 4);
     doc.text(`$${total.toFixed(2)}`, totX + totW - 4, tY + 4, { align: 'right' });
 
-    y = totalsY + 34;
+    y = rowY + 38;
 
     // ─── TÉRMINOS Y CONDICIONES ───
     y = this.drawSectionTitle(doc, 'TÉRMINOS Y CONDICIONES DE LA COTIZACIÓN', y, M, W);
